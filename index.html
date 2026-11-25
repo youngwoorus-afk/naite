@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="나이테">
 <link rel="manifest" href="manifest.webmanifest">
+<script>try{if(localStorage.getItem('naite-pin'))document.documentElement.classList.add('locked')}catch(e){}</script>
 <link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
 <link rel="icon" type="image/png" href="icons/favicon-32.png">
 <title>나이테 일기장</title>
@@ -121,6 +122,23 @@ li.divider{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-conten
 li.divider button{min-height:36px;font-size:14px;background:transparent;padding:0 12px}
 .yr.old{padding:12px 4px}.yr.old .y{font-size:24px;color:var(--muted)}
 .peek{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;background:var(--coralSoft);border-color:transparent;font-size:16px}
+html.locked #calView,html.locked #dayView{visibility:hidden}
+#lock{position:fixed;inset:0;z-index:60;background:var(--band);color:var(--onBand);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));text-align:center}
+#lock img{width:84px;height:84px;border-radius:20px;margin-bottom:10px}
+#lock h2{margin:0;font:700 26px/1.3 "Gowun Batang",serif}
+#lockSub{margin:0;min-height:24px;font-size:15px;opacity:.85}
+#lockSub.err{color:#ffd2cc;opacity:1}
+.dots{display:flex;gap:16px;margin:18px 0 22px}
+.dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--onBand)}
+.dots i.on{background:var(--coral);border-color:var(--coral)}
+.dots.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@media(prefers-reduced-motion:reduce){.dots.shake{animation:none}}
+.pad{display:grid;grid-template-columns:repeat(3,76px);gap:14px}
+.pad button{width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--onBand);font-size:28px;padding:0}
+.pad button.ghost{background:transparent;border-color:transparent;font-size:16px}
+.lockLinks{display:flex;gap:10px;margin-top:18px}
+.lockLinks button{background:transparent;border:0;color:var(--onBand);text-decoration:underline;font-size:14px;min-height:40px}
 #pasteBox{width:100%;min-height:90px;margin-top:10px;background:none;font-size:14px;line-height:1.5}
 @media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:96px;position:absolute;right:max(5vw,16px);top:22px}.band{position:relative;padding-bottom:76px}
 #dayView h1{padding-right:100px}.c{min-height:58px}.c .n{width:32px;height:32px;font-size:15px}.c .em{font-size:14px;height:14px}.nav button{flex:1 1 auto;padding:0 10px}.nav input{flex:1 1 100%}
@@ -131,6 +149,14 @@ li.divider button{min-height:36px;font-size:14px;background:transparent;padding:
 </style>
 </head>
 <body>
+<div id="lock" hidden role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+  <img src="icons/icon-512.png" alt="">
+  <h2 id="lockTitle">비밀번호 입력</h2>
+  <p id="lockSub"></p>
+  <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="pad" id="pad"></div>
+  <div class="lockLinks"><button id="lockForgot">비밀번호를 잊었어요</button><button id="lockCancel">취소</button></div>
+</div>
 <div id="login" hidden>
   <img src="icons/icon-512.png" alt="">
   <h1>나이테 일기장</h1>
@@ -173,6 +199,7 @@ li.divider button{min-height:36px;font-size:14px;background:transparent;padding:
   </section>
   <p class="status sLine">기록을 불러오는 중…</p>
   <p class="acct" id="acct" hidden><span id="who"></span><button id="logout">로그아웃</button></p>
+  <p class="acct"><span id="pinState">앱 잠금: 꺼짐</span><span style="display:flex;gap:8px"><button id="pinSet">잠금 비밀번호 설정</button><button id="pinOff" hidden>잠금 끄기</button></span></p>
 </main>
 </div>
 <div id="dayView" hidden>
@@ -371,6 +398,7 @@ async function initStore(){
   $('#resetPw').addEventListener('click',()=>{const em=$('#lEmail').value.trim();if(!em){say('이메일 칸을 먼저 채워 주세요.');return}
     A.sendPasswordResetEmail(auth,em).then(()=>say('비밀번호 재설정 메일을 보냈어요. 메일함을 확인해 주세요.')).catch(e=>say(authMsg(e)))});
   $('#logout').addEventListener('click',()=>A.signOut(auth));
+  doSignOut=()=>A.signOut(auth);
   let unsub=null;
   A.onAuthStateChanged(auth,user=>{
     if(unsub){unsub();unsub=null}
@@ -497,6 +525,7 @@ $('#today').addEventListener('click',()=>go(NOW.getMonth()+1,NOW.getDate(),TY));
 $('#pick').addEventListener('change',e=>{const v=e.target.value;if(!v)return;const[y,mm,dd]=v.split('-').map(Number);go(mm,dd,Math.min(y,TY))});
 $('#yearSel').addEventListener('change',e=>{year=+e.target.value;render()});
 document.addEventListener('keydown',e=>{
+  if(!$('#lock').hidden)return;
   if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
   const f=view==='cal'?moveMonth:shift;if(e.key==='ArrowLeft')f(-1);if(e.key==='ArrowRight')f(1);
 });
@@ -576,6 +605,84 @@ $('#restore').addEventListener('click',()=>restore($('#pasteBox').value));
 $('#fileBk').addEventListener('change',async e=>{const f=e.target.files[0];if(f)restore(await f.text());e.target.value=''});
 
 render();
+/* ---------- 앱 잠금 (이 기기 전용 4자리 비밀번호) ---------- */
+let doSignOut=null;
+const PINKEY='naite-pin';
+let pinMode='unlock',pinBuf='',pinFirst='',fails=0,lockUntil=0,hiddenAt=0,pinBusy=false;
+const getPin=()=>{try{return JSON.parse(localStorage.getItem(PINKEY)||'null')}catch(e){return null}};
+const b64=u=>btoa(String.fromCharCode(...u)),unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function hashPin(pin,salt){
+  const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:unb64(salt),iterations:150000,hash:'SHA-256'},k,256);
+  return b64(new Uint8Array(bits));
+}
+const LOCK_TXT={unlock:['비밀번호 입력','나이테 일기장을 열려면 비밀번호를 입력해 주세요.'],off:['지금 비밀번호 입력','잠금을 끄려면 지금 비밀번호를 입력해 주세요.'],
+  change:['지금 비밀번호 입력','바꾸기 전에 지금 비밀번호를 입력해 주세요.'],set1:['새 비밀번호','숫자 4자리를 정해 주세요.'],set2:['한 번 더','확인을 위해 한 번 더 입력해 주세요.']};
+$('#pad').innerHTML=[1,2,3,4,5,6,7,8,9].map(n=>`<button type="button" data-k="${n}">${n}</button>`).join('')+'<span></span><button type="button" data-k="0">0</button><button type="button" class="ghost" data-k="del" aria-label="지우기">지우기</button>';
+function paintLock(msg,err){
+  $('#lockTitle').textContent=LOCK_TXT[pinMode][0];
+  const s=$('#lockSub');s.textContent=msg||LOCK_TXT[pinMode][1];s.classList.toggle('err',!!err);
+  [...$('#dots').children].forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length));
+  $('#lockCancel').hidden=pinMode==='unlock';
+  $('#lockForgot').hidden=!(pinMode==='unlock'||pinMode==='off'||pinMode==='change');
+}
+function openLock(mode){pinMode=mode;pinBuf='';pinFirst='';$('#lock').hidden=false;paintLock();}
+function closeLock(){$('#lock').hidden=true;pinBuf='';document.documentElement.classList.remove('locked');paintPinRow();}
+function paintPinRow(){const on=!!getPin();$('#pinState').textContent='앱 잠금: '+(on?'켜짐 (이 기기)':'꺼짐');$('#pinSet').textContent=on?'비밀번호 바꾸기':'잠금 비밀번호 설정';$('#pinOff').hidden=!on;}
+function shake(msg){const d=$('#dots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake');pinBuf='';paintLock(msg,true);}
+async function submitPin(){
+  if(pinBusy)return;pinBusy=true;
+  try{
+    if(pinMode==='set1'){pinFirst=pinBuf;pinBuf='';pinMode='set2';paintLock();return}
+    if(pinMode==='set2'){
+      if(pinBuf!==pinFirst){pinMode='set1';pinFirst='';shake('두 번 입력한 비밀번호가 달라요. 처음부터 다시 정해 주세요.');return}
+      const salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+      localStorage.setItem(PINKEY,JSON.stringify({salt,hash:await hashPin(pinBuf,salt)}));
+      closeLock();setStatus('앱 잠금을 켰어요. 앱을 열 때마다 비밀번호를 물어봐요.');return;
+    }
+    if(Date.now()<lockUntil){shake(`잠시 후 다시 시도해 주세요 (${Math.ceil((lockUntil-Date.now())/1000)}초)`);return}
+    const p=getPin();
+    if(!p){closeLock();return}
+    if(await hashPin(pinBuf,p.salt)===p.hash){
+      fails=0;
+      if(pinMode==='off'){localStorage.removeItem(PINKEY);closeLock();setStatus('앱 잠금을 껐어요.');return}
+      if(pinMode==='change'){pinBuf='';pinMode='set1';paintLock();return}
+      closeLock();return;
+    }
+    fails++;
+    if(fails>=5){lockUntil=Date.now()+30000;fails=0;shake('5번 틀렸어요. 30초 뒤에 다시 시도해 주세요.')}
+    else shake(`비밀번호가 달라요 (${fails}/5)`);
+  }catch(e){shake('잠금 기능을 쓸 수 없는 환경이에요. https 주소로 열어 주세요.')}
+  finally{pinBusy=false}
+}
+function pressKey(k){
+  if(k==='del'){pinBuf=pinBuf.slice(0,-1);paintLock();return}
+  if(pinBuf.length>=4)return;
+  pinBuf+=k;paintLock();
+  if(pinBuf.length===4)setTimeout(submitPin,120);
+}
+$('#pad').addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(b)pressKey(b.dataset.k)});
+document.addEventListener('keydown',e=>{
+  if($('#lock').hidden)return;
+  if(/^[0-9]$/.test(e.key)){e.preventDefault();pressKey(e.key)}
+  else if(e.key==='Backspace'){e.preventDefault();pressKey('del')}
+  else if(e.key==='Escape'&&pinMode!=='unlock')closeLock();
+});
+$('#lockCancel').addEventListener('click',closeLock);
+$('#lockForgot').addEventListener('click',()=>{
+  if(!doSignOut){paintLock('로그인 정보가 없어 여기서는 풀 수 없어요. 크롬 설정에서 이 사이트 데이터를 지우면 잠금이 풀려요.',true);return}
+  localStorage.removeItem(PINKEY);closeLock();doSignOut();
+  $('#loginMsg').textContent='보안을 위해 로그아웃했어요. 다시 로그인한 뒤 새 잠금 비밀번호를 정해 주세요.';
+});
+$('#pinSet').addEventListener('click',()=>openLock(getPin()?'change':'set1'));
+$('#pinOff').addEventListener('click',()=>openLock('off'));
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){hiddenAt=Date.now();return}
+  if(getPin()&&$('#lock').hidden&&hiddenAt&&Date.now()-hiddenAt>60000){document.documentElement.classList.add('locked');openLock('unlock')}
+});
+paintPinRow();
+if(getPin())openLock('unlock');
+
 initStore();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
