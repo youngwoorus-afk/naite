@@ -53,7 +53,7 @@ h1{font:700 clamp(52px,10vw,92px)/1.02 "Gowun Batang",serif;margin:6px 0 10px;le
 .nav{display:flex;flex-wrap:wrap;gap:8px}
 .nav button,.nav input{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:var(--onBand);min-height:44px;border-radius:10px;padding:0 14px;font-size:16px}
 .nav input{color-scheme:dark}
-.rings{overflow:visible;width:clamp(130px,20vw,190px);height:auto;display:block}
+.rings{overflow:visible;width:clamp(150px,24vw,230px);height:auto;display:block}
 main{position:relative;max-width:900px;margin:-60px auto 0;padding:0 max(3vw,12px) 64px}
 .paper{background:var(--paper);border-radius:18px;box-shadow:0 18px 40px -24px rgba(20,20,60,.45);padding:clamp(18px,3vw,32px)}
 .writeHead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -143,8 +143,8 @@ html.locked #calView,html.locked #dayView{visibility:hidden}
 @keyframes ringIn{from{opacity:0;transform:scale(.55)}}
 @media(prefers-reduced-motion:reduce){#rings .gr{animation:none}}
 #pasteBox{width:100%;min-height:90px;margin-top:10px;background:none;font-size:14px;line-height:1.5}
-@media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:96px;position:absolute;right:max(5vw,16px);top:calc(22px + env(safe-area-inset-top))}.band{position:relative;padding-bottom:76px}
-#dayView h1{padding-right:100px}.c{min-height:58px}.c .n{width:32px;height:32px;font-size:15px}.c .em{font-size:14px;height:14px}.nav button{flex:1 1 auto;padding:0 10px}.nav input{flex:1 1 100%}
+@media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:128px;position:absolute;right:max(4vw,12px);top:calc(14px + env(safe-area-inset-top))}.band{position:relative;padding-bottom:76px}
+#dayView h1{padding-right:128px}#dayView .kick,#dayView .sub{padding-right:128px}.c{min-height:58px}.c .n{width:32px;height:32px;font-size:15px}.c .em{font-size:14px;height:14px}.nav button{flex:1 1 auto;padding:0 10px}.nav input{flex:1 1 100%}
 .quote{grid-template-columns:1fr}.quote .tag{grid-row:auto;justify-self:start}
 .moods{grid-template-columns:repeat(5,minmax(0,1fr))}.moods button{min-height:60px;font-size:12px}
 #save{flex:1 1 100%;min-height:52px;font-size:17px}
@@ -450,13 +450,16 @@ function drawRings(){
     <path d="M100 102 C114 76 140 72 150 78 C144 98 118 108 100 102Z" fill="url(#lf)" class="gr" style="animation-delay:.25s"/>`;
     $('#rings').innerHTML=s;return 0;
   }
-  const R=24+66*(1-Math.exp(-n/5)),pith=3.5;
+  const R=54+38*(1-Math.exp(-n/5)),pith=4.5;
   s+=`<g class="gr"><path d="${wobPath(R+7,1)}" fill="#5c3f26"/><path d="${wobPath(R+4.5,2)}" fill="none" stroke="#7a5534" stroke-width="2" stroke-dasharray="3 4"/>
   <path d="${wobPath(R,3)}" fill="url(#wood)"/></g>`;
+  const step=(R-pith)/n,nzAll=Math.min(1,step/9);
+  for(let i=n-1;i>=0;i--){const r=pith+step*(i+1)-0.8;
+    s+=`<path class="gr" style="animation-delay:${(0.06+i*Math.min(0.06,0.7/n)).toFixed(2)}s" d="${wobPath(r,yrs[i]%97,nzAll)}" fill="${i%2?'#e8c993':'#f1dbaa'}"/>`;}
   yrs.forEach((y,i)=>{
-    const nz=Math.min(1,(R-pith)/n/9),r=pith+(R-pith)*(i+1)/n-0.8,sel=y===year,dl=(0.08+i*Math.min(0.06,0.7/n)).toFixed(2);
-    if(i<n-1)s+=`<path class="gr" style="animation-delay:${dl}s" d="${wobPath(r-(R-pith)/n*0.35,y%89+5,nz)}" fill="none" stroke="#c99a5f" stroke-opacity=".35" stroke-width="${Math.max(1,(R-pith)/n*0.35).toFixed(1)}"/>`;
-    s+=`<path class="gr" style="animation-delay:${dl}s" d="${wobPath(r,y%97,nz)}" fill="none" stroke="${sel?'#2f7d4a':'#9a6534'}" stroke-opacity="${sel?1:.8}" stroke-width="${sel?2.8:1.5}"/>`;
+    const r=pith+step*(i+1)-0.8,sel=y===year,dl=(0.08+i*Math.min(0.06,0.7/n)).toFixed(2),lw=Math.max(1.2,Math.min(3.2,step*0.32));
+    s+=`<path class="gr" style="animation-delay:${dl}s" d="${wobPath(r-step*0.18,y%97,nzAll)}" fill="none" stroke="#b9854c" stroke-opacity=".55" stroke-width="${(lw*1.6).toFixed(1)}"/>`;
+    s+=`<path class="gr" style="animation-delay:${dl}s" d="${wobPath(r,y%97,nzAll)}" fill="none" stroke="${sel?'#2f7d4a':'#6e4220'}" stroke-width="${(sel?lw+1.6:lw).toFixed(1)}"/>`;
   });
   s+=`<ellipse cx="102" cy="100" rx="${pith}" ry="${pith*0.9}" fill="#7a4f27" class="gr"/>`;
   if(n>2)s+=`<path d="M103 100 L${(103+R*0.55).toFixed(1)} ${(100-R*0.18).toFixed(1)}" stroke="#8a5a2e" stroke-opacity=".45" stroke-width="1.1" class="gr" style="animation-delay:.4s"/>`;
