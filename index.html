@@ -59,7 +59,7 @@ main{position:relative;max-width:900px;margin:-60px auto 0;padding:0 max(3vw,12p
 .writeHead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
 .writeHead h2{margin:0;font:700 22px/1.2 "Gowun Batang",serif}
 select{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper);padding:0 10px;font-size:16px}
-textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:17px;line-height:1.8;background:repeating-linear-gradient(transparent 0 30px,var(--line) 30px 31px);background-attachment:local;background-position:0 13px}
+textarea{width:100%;min-height:150px;resize:none;overflow:hidden;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:17px;line-height:1.8;background:repeating-linear-gradient(transparent 0 30px,var(--line) 30px 31px);background-attachment:local;background-position:0 13px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
 .primary{background:var(--coral);border-color:var(--coral);color:#fff;font-weight:700}
 .primary:disabled{opacity:.5;cursor:default}
@@ -481,7 +481,7 @@ function render(){
   // 쓰기 칸 (입력 중일 땐 덮어쓰지 않음)
   if(k!==loadedKey||!dirty){
     const src=drafts[k]||{text:entries[k]?.text||'',mood:entries[k]?.mood||''};
-    $('#text').value=src.text;mood=MOOD[src.mood]?src.mood:'';paintMood();
+    $('#text').value=src.text;requestAnimationFrame(fitText);mood=MOOD[src.mood]?src.mood:'';paintMood();
     loadedKey=k;dirty=k in drafts;
   }
   $('#moodQ').textContent=year===TY&&m===NOW.getMonth()+1&&d===NOW.getDate()?'오늘의 하루는?':'그날의 하루는?';
@@ -531,7 +531,9 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- 저장/삭제 ---------- */
-$('#text').addEventListener('input',markDirty);
+function fitText(){const t=$('#text');if(!t)return;const y=window.scrollY;t.style.height='auto';t.style.height=Math.max(150,t.scrollHeight+2)+'px';window.scrollTo(0,y)}
+$('#text').addEventListener('input',()=>{markDirty();fitText()});
+window.addEventListener('resize',()=>requestAnimationFrame(fitText));
 async function save(){
   if(!store){$('#saveMsg').textContent='로그인 후 저장할 수 있어요.';return}
   if(!valid(year))return;
