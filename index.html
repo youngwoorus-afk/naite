@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f3170">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="나이테">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<title>나이테 일기장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 다정하고 조용한 개인 기록장, 군더더기 없이.
+   IDEA: 하루 한 장, 해마다 같은 칸에 한 줄씩 쌓는 '여러 해 일기장'의 한 페이지.
+   PICTURE: 날짜 옆 나이테 — 바깥 고리가 올해, 기록이 있는 해는 산호색으로 빛남.
+   COLOUR and TYPE: 밤하늘 남색 띠 + 흰 종이 + 산호색 포인트 / Gowun Batang 제목, Gowun Dodum 본문.
+   LAYOUT: 남색 띠(날짜·이동·나이테) → 종이 위 쓰기 칸 → 해마다의 같은 날 → 검색·백업. */
+:root{color-scheme:light dark;
+--bg:light-dark(#f3f2fa,#101127);--band:light-dark(#2f3170,#1a1b44);--paper:light-dark(#fff,#1c1d3d);
+--ink:light-dark(#1e1f3f,#ecebfa);--muted:light-dark(#686a8c,#a5a6c9);--line:light-dark(#e4e3f1,#2f305b);
+--coral:#ff6b5b;--coralSoft:light-dark(#fff0ee,#3a2531);--onBand:#f4f3ff}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Gowun Dodum",system-ui,sans-serif;overflow-x:clip}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper);padding:0 16px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+.band{background:var(--band);color:var(--onBand);padding:clamp(24px,4vw,48px) max(5vw,16px) 88px;padding-top:calc(clamp(24px,4vw,48px) + env(safe-area-inset-top))}
+main{padding-bottom:calc(64px + env(safe-area-inset-bottom))!important}
+#login{position:fixed;inset:0;z-index:50;background:var(--band);color:var(--onBand);overflow:auto;padding:calc(40px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#login img{width:112px;height:112px;border-radius:26px;box-shadow:0 18px 40px -16px rgba(0,0,0,.5)}
+#login h1{font-size:40px;margin:22px 0 6px}
+#login form{width:min(360px,100%);display:grid;gap:10px;margin-top:22px;text-align:left}
+#login input{min-height:48px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:var(--onBand);padding:0 14px;font-size:16px}
+#login input::placeholder{color:rgba(244,243,255,.6)}
+#login .gbtn{background:#fff;color:#1e1f3f;border:0;font-weight:700;min-height:50px}
+#login .alt{background:transparent;color:var(--onBand);border:1px solid rgba(255,255,255,.35)}
+#login .or{text-align:center;opacity:.7;font-size:14px;margin:4px 0}
+#loginMsg{min-height:22px;font-size:14px;color:#ffd2cc;text-align:center}
+.acct{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;margin:18px 4px 0;font-size:14px;color:var(--muted)}
+.acct button{min-height:36px;font-size:14px;background:transparent}
+.top{max-width:900px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center}
+.kick{margin:0;font-size:15px;opacity:.8}
+h1{font:700 clamp(52px,10vw,92px)/1.02 "Gowun Batang",serif;margin:6px 0 10px;letter-spacing:-.02em}
+.sub{margin:0 0 18px;font-size:16px;opacity:.85}
+.nav{display:flex;flex-wrap:wrap;gap:8px}
+.nav button,.nav input{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:var(--onBand);min-height:44px;border-radius:10px;padding:0 14px;font-size:16px}
+.nav input{color-scheme:dark}
+.rings{width:clamp(130px,20vw,190px);height:auto;display:block}
+main{position:relative;max-width:900px;margin:-60px auto 0;padding:0 max(3vw,12px) 64px}
+.paper{background:var(--paper);border-radius:18px;box-shadow:0 18px 40px -24px rgba(20,20,60,.45);padding:clamp(18px,3vw,32px)}
+.writeHead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.writeHead h2{margin:0;font:700 22px/1.2 "Gowun Batang",serif}
+select{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper);padding:0 10px;font-size:16px}
+textarea{width:100%;min-height:150px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:17px;line-height:1.8;background:repeating-linear-gradient(transparent 0 30px,var(--line) 30px 31px);background-attachment:local;background-position:0 13px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.primary{background:var(--coral);border-color:var(--coral);color:#fff;font-weight:700}
+.primary:disabled{opacity:.5;cursor:default}
+.hint{font-size:14px;color:var(--muted)}
+.status{font-size:14px;color:var(--muted);margin:14px 4px 0}
+h3{font:700 22px/1.2 "Gowun Batang",serif;margin:36px 4px 10px}
+.years{list-style:none;margin:0;padding:0}
+.yr{display:grid;grid-template-columns:118px minmax(0,1fr);gap:18px;padding:18px 4px;border-bottom:1px dashed var(--line)}
+.yr .y{font:700 30px/1 "Gowun Batang",serif}
+.yr .ago{display:block;font:14px/1.4 "Gowun Dodum",sans-serif;color:var(--muted);margin-top:6px}
+.yr.now .y{color:var(--coral)}
+.yr .txt{white-space:pre-wrap;overflow-wrap:anywhere;font-size:17px;line-height:1.8}
+.yr .empty{color:var(--muted)}
+.acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.acts button{min-height:36px;padding:0 12px;font-size:14px;background:transparent}
+.acts .danger{border-color:var(--coral);color:var(--coral)}
+.yr.none{opacity:.75}
+.fade{animation:fade .35s ease both}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.fade{animation:none}}
+.tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:36px}
+.tools .paper h4{margin:0 0 10px;font:700 18px/1.3 "Gowun Batang",serif}
+input[type=search]{width:100%;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper);padding:0 12px;font-size:16px}
+.results{list-style:none;padding:0;margin:10px 0 0;max-height:320px;overflow:auto}
+.results button{width:100%;text-align:left;display:block;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 4px;background:transparent}
+.results b{font-family:"Gowun Batang",serif;margin-right:8px}
+.results span{color:var(--muted);font-size:15px}
+.quote{margin-bottom:14px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;align-items:start}
+.quote .tag{grid-row:span 3;font:700 13px/1 "Gowun Dodum",sans-serif;background:var(--coralSoft);color:var(--coral);border-radius:999px;padding:8px 12px;white-space:nowrap}
+.quote .q{margin:0;font:700 clamp(19px,2.6vw,24px)/1.5 "Gowun Batang",serif;text-wrap:balance}
+.quote .meta{margin:0;color:var(--muted);font-size:15px}
+.quote .more{justify-self:start;min-height:36px;font-size:14px;padding:0 12px;background:transparent;margin-top:4px}
+.moodQ{margin:0 0 8px;font:700 17px/1.3 "Gowun Batang",serif}
+.moods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:14px}
+.moods button{min-height:64px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:transparent;font-size:13px;color:var(--muted)}
+.moods button .e{font-size:28px;line-height:1}
+.moods button[aria-pressed=true]{background:var(--coralSoft);border-color:var(--coral);color:var(--ink);font-weight:700}
+.yr .mood{font-size:15px;color:var(--muted);display:block;margin-bottom:4px}
+.yr .mood .e{font-size:22px;vertical-align:-3px;margin-right:4px}
+[hidden]{display:none!important}
+.wk,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wk span{text-align:center;font-size:13px;color:var(--muted);padding:4px 0 8px}
+.wk span:first-child,.c.sun .n{color:var(--coral)}.wk span:last-child,.c.sat .n{color:light-dark(#3f5fd8,#8fa5ff)}
+.c{min-height:68px;border:0;border-radius:12px;background:transparent;padding:6px 0 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.c:hover{background:var(--coralSoft)}
+.c .n{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;font-weight:700;font-size:16px}
+.c.has .n,.c.has.sun .n,.c.has.sat .n{background:var(--coral);color:#fff}
+.c.today .n{box-shadow:0 0 0 2px var(--band),0 0 0 4px var(--paper)}
+.c.today:not(.has) .n{box-shadow:inset 0 0 0 2px var(--ink)}
+.c .em{font-size:17px;line-height:1;height:17px}
+.c .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.55}
+.c.blank{visibility:hidden}
+.c.future{opacity:.45}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:14px 2px 0;font-size:14px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;vertical-align:-2px;margin-right:6px;border-radius:50%}
+.sumRow{display:flex;flex-wrap:wrap;gap:8px}
+.sumRow span{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:15px}
+.cal{margin-bottom:14px}
+#pasteBox{width:100%;min-height:90px;margin-top:10px;background:none;font-size:14px;line-height:1.5}
+@media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:96px;position:absolute;right:max(5vw,16px);top:22px}.band{position:relative;padding-bottom:76px}
+#dayView h1{padding-right:100px}.c{min-height:58px}.c .n{width:32px;height:32px;font-size:15px}.c .em{font-size:14px;height:14px}.nav button{flex:1 1 auto;padding:0 10px}.nav input{flex:1 1 100%}
+.quote{grid-template-columns:1fr}.quote .tag{grid-row:auto;justify-self:start}
+.moods{grid-template-columns:repeat(5,minmax(0,1fr))}.moods button{min-height:60px;font-size:12px}
+#save{flex:1 1 100%;min-height:52px;font-size:17px}
+.yr{grid-template-columns:1fr;gap:6px}.yr .ago{display:inline;margin-left:8px}.tools{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="login" hidden>
+  <img src="icons/icon-512.png" alt="">
+  <h1>나이테 일기장</h1>
+  <p style="margin:0;opacity:.85">해마다 같은 날, 한 겹씩 쌓이는 일기</p>
+  <form id="loginForm" novalidate>
+    <button type="button" class="gbtn" id="gLogin">Google 계정으로 로그인</button>
+    <p class="or">또는 이메일로</p>
+    <input type="email" id="lEmail" placeholder="이메일" autocomplete="username" required>
+    <input type="password" id="lPw" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" required>
+    <button type="submit" class="primary">로그인</button>
+    <button type="button" class="alt" id="signup">처음이에요 · 이메일로 가입</button>
+    <button type="button" class="alt" id="resetPw" style="border:0;min-height:36px;font-size:14px;text-decoration:underline">비밀번호를 잊었어요</button>
+    <p id="loginMsg" role="status"></p>
+  </form>
+</div>
+<div id="calView">
+<header class="band">
+  <div class="top" style="grid-template-columns:1fr">
+    <div>
+      <p class="kick">나이테 일기장</p>
+      <h1 id="calTitle">2026년 11월</h1>
+      <p class="sub" id="calSub"></p>
+      <div class="nav">
+        <button id="cPrev" aria-label="이전 달">‹ 이전 달</button>
+        <button id="cToday">이번 달</button>
+        <button id="cNext" aria-label="다음 달">다음 달 ›</button>
+      </div>
+    </div>
+  </div>
+</header>
+<main>
+  <section class="paper cal" aria-label="달력">
+    <div class="wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+    <div class="grid" id="grid"></div>
+    <p class="legend"><span><i style="width:14px;height:14px;background:var(--coral)"></i>일기 쓴 날</span><span><i style="width:6px;height:6px;background:var(--muted)"></i>다른 해 같은 날에 기록 있음</span></p>
+  </section>
+  <section class="paper">
+    <h4 style="margin:0 0 10px;font:700 18px/1.3 'Gowun Batang',serif" id="sumTitle">이번 달 기분</h4>
+    <div class="sumRow" id="moodSum"></div>
+  </section>
+  <p class="status sLine">기록을 불러오는 중…</p>
+  <p class="acct" id="acct" hidden><span id="who"></span><button id="logout">로그아웃</button></p>
+</main>
+</div>
+<div id="dayView" hidden>
+<header class="band">
+  <div class="top">
+    <div>
+      <p class="kick" id="kick">오늘의 페이지</p>
+      <h1 id="title">11월 25일</h1>
+      <p class="sub" id="sub"></p>
+      <div class="nav">
+        <button id="toCal">‹ 달력</button>
+        <button id="prev" aria-label="전날">‹ 전날</button>
+        <button id="today">오늘</button>
+        <button id="next" aria-label="다음날">다음날 ›</button>
+        <input type="date" id="pick" aria-label="날짜 고르기">
+      </div>
+    </div>
+    <svg class="rings" id="rings" viewBox="0 0 200 200" role="img" aria-label="해마다의 기록 나이테"></svg>
+  </div>
+</header>
+
+<main>
+  <section class="paper quote" aria-label="오늘의 글귀">
+    <span class="tag" id="qTag">사자성어</span>
+    <p class="q" id="qText"></p>
+    <p class="meta" id="qMeta"></p>
+    <button class="more" id="qMore">다른 글귀 보기</button>
+  </section>
+  <section class="paper" aria-labelledby="wh">
+    <div class="writeHead">
+      <h2 id="wh">오늘을 적기</h2>
+      <label class="hint">연도 <select id="yearSel"></select></label>
+    </div>
+    <p class="moodQ" id="moodQ">오늘의 하루는?</p>
+    <div class="moods" id="moods" role="group" aria-labelledby="moodQ"></div>
+    <textarea id="text" placeholder="오늘은 어떤 하루였어?"></textarea>
+    <div class="row">
+      <button class="primary" id="save">저장</button>
+      <span class="hint" id="saveMsg">Ctrl+Enter로도 저장돼요</span>
+    </div>
+  </section>
+  <p class="status sLine" id="status">기록을 불러오는 중…</p>
+
+  <h3 id="listTitle">해마다의 오늘</h3>
+  <ul class="years" id="years"></ul>
+
+  <div class="tools">
+    <section class="paper">
+      <h4>모든 일기에서 찾기</h4>
+      <input type="search" id="q" placeholder="단어를 입력해 봐 (예: 생일)">
+      <ul class="results" id="results"></ul>
+    </section>
+    <section class="paper">
+      <h4>백업</h4>
+      <p class="hint" style="margin:0">모든 기록을 파일이나 글자(JSON)로 보관하고, 다시 불러와 되살릴 수 있어요. 예전 일기장의 ‘백업 복사’ 내용을 붙여 넣으면 그대로 옮겨져요.</p>
+      <div class="row">
+        <button id="saveBk">백업 파일 저장</button>
+        <button id="copyBk">백업 복사</button>
+        <label><input type="file" id="fileBk" accept=".json,application/json" hidden><span class="hint" style="text-decoration:underline;cursor:pointer">파일에서 불러오기</span></label>
+      </div>
+      <textarea id="pasteBox" placeholder="백업 글자를 여기에 붙여 넣고 ‘불러오기’"></textarea>
+      <div class="row"><button id="restore">불러오기</button><span class="hint" id="bkMsg"></span></div>
+    </section>
+  </div>
+</main>
+</div>
+
+<script type="module">
+import {firebaseConfig} from './config.js';
+{
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WD=['일','월','화','수','목','금','토'];
+const NOW=new Date(), TY=NOW.getFullYear();
+let m=NOW.getMonth()+1, d=NOW.getDate(), year=TY;
+let entries={}, store=null, loadedKey='', dirty=false, armedDel='';
+const drafts={};
+let mood='', qOffset=0, view='cal', cy=TY, cm=NOW.getMonth()+1;
+
+const MOODS=[['great','😆','최고'],['happy','😊','좋음'],['love','🥰','설렘'],['calm','😌','평온'],['soso','🙂','그럭저럭'],
+['tired','😴','피곤'],['sad','😢','슬픔'],['anxious','😰','불안'],['angry','😠','화남'],['down','😞','우울']];
+const MOOD=Object.fromEntries(MOODS.map(x=>[x[0],x]));
+
+/* 오늘의 글귀: [분류, 글귀, 뜻·출처] */
+const QUOTES=[
+['사자성어','고진감래(苦盡甘來)','쓴 것이 다하면 단 것이 온다. 고생 끝에 즐거움이 온다는 뜻.'],
+['명언','천 리 길도 한 걸음부터 시작된다.','노자, 『도덕경』 — 千里之行 始於足下'],
+['속담','티끌 모아 태산','작은 것도 모이고 쌓이면 큰 것이 된다.'],
+['사자성어','우공이산(愚公移山)','우공이 산을 옮긴다. 꾸준히 하면 끝내 이룬다는 뜻. 『열자』'],
+['명언','배우고 때때로 익히면 또한 기쁘지 아니한가.','공자, 『논어』 학이편'],
+['사자성어','대기만성(大器晩成)','큰 그릇은 늦게 이루어진다. 『도덕경』'],
+['명언','죽고자 하면 살 것이요, 살고자 하면 죽을 것이다.','이순신, 『난중일기』 — 必死則生 必生則死'],
+['속담','시작이 반이다','무슨 일이든 시작하기가 어렵지, 시작하면 반은 이룬 셈이다.'],
+['사자성어','마부작침(磨斧作針)','도끼를 갈아 바늘을 만든다. 끈기 있게 노력하면 이룬다.'],
+['명언','하루라도 책을 읽지 않으면 입 안에 가시가 돋는다.','안중근 유묵 — 一日不讀書 口中生荊棘'],
+['사자성어','온고지신(溫故知新)','옛것을 익혀 새것을 안다. 『논어』 위정편'],
+['명언','아는 것은 좋아하는 것만 못하고, 좋아하는 것은 즐기는 것만 못하다.','공자, 『논어』 옹야편'],
+['사자성어','새옹지마(塞翁之馬)','변방 노인의 말. 인생의 길흉화복은 미리 알 수 없다. 『회남자』'],
+['속담','고생 끝에 낙이 온다','어려움을 견디면 좋은 날이 온다.'],
+['사자성어','역지사지(易地思之)','처지를 바꾸어 생각해 본다.'],
+['명언','세 사람이 길을 가면 그 가운데 반드시 나의 스승이 있다.','공자, 『논어』 술이편'],
+['사자성어','수적천석(水滴穿石)','떨어지는 물방울이 돌을 뚫는다. 작은 힘도 쌓이면 큰일을 해낸다.'],
+['명언','삶이 그대를 속일지라도 슬퍼하거나 노하지 말라.','푸시킨, 「삶이 그대를 속일지라도」'],
+['사자성어','전화위복(轉禍爲福)','재앙이 바뀌어 오히려 복이 된다.'],
+['격언','이 또한 지나가리라.','오래 전해 내려오는 격언'],
+['사자성어','칠전팔기(七顚八起)','일곱 번 넘어져도 여덟 번 일어난다.'],
+['명언','아는 것을 안다 하고 모르는 것을 모른다 하는 것, 이것이 아는 것이다.','공자, 『논어』 위정편'],
+['사자성어','과유불급(過猶不及)','지나침은 모자람과 같다. 『논어』 선진편'],
+['명언','오늘을 붙잡아라. — 카르페 디엠(Carpe diem)','호라티우스, 『송가』'],
+['사자성어','일취월장(日就月將)','날로 달로 자라고 나아간다. 『시경』'],
+['속담','가는 말이 고와야 오는 말이 곱다','내가 남에게 잘해야 남도 나에게 잘한다.'],
+['사자성어','유비무환(有備無患)','미리 준비하면 걱정할 것이 없다. 『서경』'],
+['명언','인생은 가까이서 보면 비극이지만 멀리서 보면 희극이다.','찰리 채플린'],
+['사자성어','초지일관(初志一貫)','처음 품은 뜻을 끝까지 밀고 나간다.'],
+['명언','나는 생각한다, 그러므로 나는 존재한다.','데카르트, 『방법서설』'],
+['한자성어','소문만복래(笑門萬福來)','웃는 집 문으로 온갖 복이 들어온다.'],
+['명언','나를 죽이지 못하는 것은 나를 더 강하게 만든다.','니체, 『우상의 황혼』'],
+['사자성어','절차탁마(切磋琢磨)','옥과 돌을 자르고 갈고 다듬듯, 학문과 덕을 닦는다. 『시경』'],
+['격언','늦었다고 생각할 때가 가장 빠를 때다.','오래 전해 내려오는 격언'],
+['사자성어','교학상장(敎學相長)','가르치고 배우며 서로 함께 성장한다. 『예기』 학기편'],
+['명언','진실로 하루가 새로워지려거든 날마다 새롭게 하고, 또 날마다 새롭게 하라.','『대학』 — 苟日新 日日新 又日新'],
+['사자성어','안분지족(安分知足)','제 분수에 편안해하며 만족할 줄 안다.'],
+['명언','산다는 것은 숨 쉬는 것이 아니라 행동하는 것이다.','루소, 『에밀』'],
+['사자성어','화이부동(和而不同)','남과 어울리되 무작정 같아지지는 않는다. 『논어』 자로편'],
+['명언','세상에서 가장 아름다운 것은 보거나 만질 수 없다. 마음으로 느껴야 한다.','헬렌 켈러'],
+['사자성어','동고동락(同苦同樂)','괴로움도 즐거움도 함께한다.'],
+['속담','낮말은 새가 듣고 밤말은 쥐가 듣는다','아무도 안 듣는 데서라도 말조심하라.'],
+['사자성어','형설지공(螢雪之功)','반딧불과 눈빛으로 공부해 이룬 공. 어려움 속 꾸준한 배움.'],
+['명언','삶이 있는 한 희망은 있다.','키케로'],
+['사자성어','십시일반(十匙一飯)','열 숟가락이 모이면 한 그릇 밥이 된다. 여럿이 힘을 모으면 쉽다.'],
+['명언','천재는 1%의 영감과 99%의 노력으로 이루어진다.','토머스 에디슨'],
+['사자성어','자강불식(自強不息)','스스로 힘쓰며 쉬지 않는다. 『주역』'],
+['명언','나는 우리나라가 세계에서 가장 아름다운 나라가 되기를 원한다.','김구, 『백범일지』 「나의 소원」'],
+['사자성어','지성감천(至誠感天)','지극한 정성이면 하늘도 감동한다.'],
+['격언','실패는 성공의 어머니','실패에서 배우면 성공에 이른다.'],
+['사자성어','반구제기(反求諸己)','잘못의 원인을 남이 아닌 자신에게서 찾는다. 『맹자』'],
+['명언','어제로부터 배우고, 오늘을 살며, 내일을 희망하라.','알베르트 아인슈타인의 말로 알려짐'],
+['사자성어','백절불굴(百折不屈)','백 번 꺾여도 굽히지 않는다.'],
+['명언','너 자신을 알라.','고대 그리스 델포이 신전의 격언'],
+['사자성어','금상첨화(錦上添花)','비단 위에 꽃을 더한다. 좋은 일에 좋은 일이 더해짐.'],
+['명언','행복은 스스로 만족하는 사람의 것이다.','아리스토텔레스'],
+['사자성어','일기일회(一期一會)','일생에 단 한 번의 만남. 지금 이 순간을 소중히.'],
+['속담','웃는 얼굴에 침 못 뱉는다','좋게 대하는 사람에게는 모질게 못 한다.'],
+['사자성어','호연지기(浩然之氣)','하늘과 땅 사이에 가득한 넓고 큰 기운. 『맹자』'],
+['명언','내일 죽을 것처럼 살고, 영원히 살 것처럼 배워라.','마하트마 간디의 말로 알려짐']
+];
+function showQuote(){
+  const doy=Math.round((new Date(2024,m-1,d)-new Date(2024,0,1))/864e5);
+  const q=QUOTES[(doy+qOffset)%QUOTES.length];
+  $('#qTag').textContent=q[0];$('#qText').textContent=q[1];$('#qMeta').textContent=q[2];
+}
+$('#qMore').addEventListener('click',()=>{qOffset++;showQuote()});
+$('#moods').innerHTML=MOODS.map(([k,e,l])=>`<button type="button" data-mood="${k}" aria-pressed="false"><span class="e" aria-hidden="true">${e}</span>${l}</button>`).join('');
+function paintMood(){for(const b of document.querySelectorAll('#moods button'))b.setAttribute('aria-pressed',String(b.dataset.mood===mood))}
+$('#moods').addEventListener('click',e=>{const b=e.target.closest('[data-mood]');if(!b)return;
+  mood=mood===b.dataset.mood?'':b.dataset.mood;paintMood();markDirty();});
+function markDirty(){dirty=true;drafts[loadedKey]={text:$('#text').value,mood};$('#saveMsg').textContent='저장 안 된 글이 있어요';}
+
+const md=()=>pad(m)+'-'+pad(d);
+const keyOf=y=>y+'-'+md();
+const valid=y=>{const t=new Date(y,m-1,d);return t.getMonth()===m-1&&t.getDate()===d};
+const wd=y=>WD[new Date(y,m-1,d).getDay()];
+const setStatus=t=>{for(const el of document.querySelectorAll('.sLine'))el.textContent=t};
+
+/* ---------- 저장소: 클라우드(내 계정 전용) → 안 되면 이 브라우저 ---------- */
+const configured=!!(firebaseConfig&&firebaseConfig.apiKey&&firebaseConfig.projectId&&!/여기/.test(firebaseConfig.apiKey));
+const AUTH_MSG={'auth/invalid-credential':'이메일 또는 비밀번호가 맞지 않아요.','auth/wrong-password':'비밀번호가 맞지 않아요.','auth/user-not-found':'가입된 이메일이 아니에요.',
+'auth/email-already-in-use':'이미 가입된 이메일이에요. 로그인해 주세요.','auth/weak-password':'비밀번호는 6자 이상이어야 해요.','auth/invalid-email':'이메일 형식을 확인해 주세요.',
+'auth/popup-blocked':'팝업이 막혔어요. 이메일 로그인을 이용해 주세요.','auth/popup-closed-by-user':'로그인 창이 닫혔어요.','auth/unauthorized-domain':'이 주소가 Firebase 승인된 도메인에 없어요. 설치 안내 5단계를 확인해 주세요.',
+'auth/operation-not-allowed':'Firebase에서 이 로그인 방법이 꺼져 있어요. 설치 안내 2단계를 확인해 주세요.','auth/network-request-failed':'인터넷 연결을 확인해 주세요.','auth/too-many-requests':'시도가 너무 많아요. 잠시 후 다시 해 주세요.'};
+const authMsg=e=>AUTH_MSG[e&&e.code]||('로그인 중 문제가 생겼어요 ('+(e&&e.code||'알 수 없음')+')');
+function localMode(){
+  let raw=null;try{raw=JSON.parse(localStorage.getItem('nai-diary')||'{}')}catch(e){}
+  entries=raw&&typeof raw==='object'?raw:{};
+  const persist=()=>{try{localStorage.setItem('nai-diary',JSON.stringify(entries))}catch(e){}};
+  store={save:async(id,b)=>{entries[id]=b;persist();render()},del:async id=>{delete entries[id];persist();render()}};
+  setStatus('아직 Firebase 설정 전이라 이 기기에만 저장돼요. config.js를 채우면 여러 기기에서 동기화돼요.');
+  render();
+}
+async function initStore(){
+  if(!configured){localMode();return}
+  const base='https://www.gstatic.com/firebasejs/10.12.2/';
+  let App,A,F;
+  try{[App,A,F]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')])}
+  catch(e){setStatus('동기화 기능을 불러오지 못했어요. 인터넷 연결을 확인하고 앱을 다시 열어 주세요.');return}
+  const app=App.initializeApp(firebaseConfig),auth=A.getAuth(app);
+  let fdb;try{fdb=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})})}catch(e){fdb=F.getFirestore(app)}
+  const say=t=>{$('#loginMsg').textContent=t};
+  $('#gLogin').addEventListener('click',()=>{say('');A.signInWithPopup(auth,new A.GoogleAuthProvider()).catch(e=>say(authMsg(e)))});
+  $('#loginForm').addEventListener('submit',e=>{e.preventDefault();say('로그인 중…');A.signInWithEmailAndPassword(auth,$('#lEmail').value.trim(),$('#lPw').value).then(()=>say('')).catch(e=>say(authMsg(e)))});
+  $('#signup').addEventListener('click',()=>{say('가입 중…');A.createUserWithEmailAndPassword(auth,$('#lEmail').value.trim(),$('#lPw').value).then(()=>say('')).catch(e=>say(authMsg(e)))});
+  $('#resetPw').addEventListener('click',()=>{const em=$('#lEmail').value.trim();if(!em){say('이메일 칸을 먼저 채워 주세요.');return}
+    A.sendPasswordResetEmail(auth,em).then(()=>say('비밀번호 재설정 메일을 보냈어요. 메일함을 확인해 주세요.')).catch(e=>say(authMsg(e)))});
+  $('#logout').addEventListener('click',()=>A.signOut(auth));
+  let unsub=null;
+  A.onAuthStateChanged(auth,user=>{
+    if(unsub){unsub();unsub=null}
+    entries={};
+    if(!user){store=null;$('#login').hidden=false;$('#acct').hidden=true;render();return}
+    $('#login').hidden=true;$('#acct').hidden=false;$('#who').textContent=(user.email||'로그인됨')+' 계정';
+    const col=F.collection(fdb,'users',user.uid,'entries');
+    const quick=p=>{p.catch(err=>setStatus('저장이 서버에 반영되지 않았어요 ('+err.code+'). 다시 저장해 주세요.'));return Promise.race([p,new Promise(r=>setTimeout(r,1500))])};
+    store={save:(id,b)=>quick(F.setDoc(F.doc(col,id),b)),del:id=>quick(F.deleteDoc(F.doc(col,id)))};
+    setStatus('기록을 불러오는 중…');
+    const timer=setTimeout(()=>setStatus('서버 연결이 느려요. 보이는 기록은 이 기기에 저장된 내용이에요.'),10000);
+    unsub=F.onSnapshot(col,{includeMetadataChanges:true},snap=>{
+      const o={};snap.forEach(d=>{const v=d.data();if(v&&typeof v.text==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d.id))o[d.id]=v});
+      entries=o;
+      if(!snap.metadata.fromCache){clearTimeout(timer);setStatus(snap.metadata.hasPendingWrites?'동기화 중…':'모든 기기와 동기화됐어요.')}
+      else setStatus('오프라인이에요. 쓴 일기는 연결되면 자동으로 올라가요.');
+      render();
+    },e=>{clearTimeout(timer);setStatus('기록을 불러오지 못했어요 ('+e.code+'). 설치 안내 4단계의 보안 규칙을 확인해 주세요.')});
+  });
+}
+/* ---------- 그리기 ---------- */
+function yearsShown(){
+  const ys=new Set();for(let y=TY;y>TY-5;y--)ys.add(y);
+  for(const k in entries)if(k.slice(5)===md())ys.add(+k.slice(0,4));
+  return [...ys].filter(y=>y<=TY).sort((a,b)=>b-a);
+}
+function drawRings(ys){
+  const n=ys.length,max=92,min=14,step=n>1?(max-min)/(n-1):0;
+  let s='<circle cx="100" cy="100" r="98" fill="rgba(255,255,255,.06)"/>';
+  ys.forEach((y,i)=>{
+    const r=max-i*step,has=!!entries[y+'-'+md()];
+    s+=`<circle cx="100" cy="100" r="${r.toFixed(1)}" fill="none" stroke="${has?'#ff6b5b':'rgba(255,255,255,.28)'}" stroke-width="${has?5:1.5}"${y===year?' stroke-dasharray="2 5"':''}/>`;
+  });
+  const c=Object.keys(entries).filter(k=>k.slice(5)===md()).length;
+  s+=`<text x="100" y="108" text-anchor="middle" fill="#f4f3ff" font-family="Gowun Batang,serif" font-size="26" font-weight="700">${c}</text>`;
+  $('#rings').innerHTML=s;
+  return c;
+}
+function renderCal(){
+  $('#calTitle').textContent=`${cy}년 ${cm}월`;
+  const first=new Date(cy,cm-1,1).getDay(),days=new Date(cy,cm,0).getDate();
+  const otherMd=new Set();for(const k in entries)if(+k.slice(0,4)!==cy)otherMd.add(k.slice(5));
+  let h='',cnt=0;const tally={};
+  for(let i=0;i<first;i++)h+='<span class="c blank"></span>';
+  for(let dd=1;dd<=days;dd++){
+    const k=`${cy}-${pad(cm)}-${pad(dd)}`,e=entries[k],dw=(first+dd-1)%7,mmdd=pad(cm)+'-'+pad(dd);
+    const isToday=cy===TY&&cm===NOW.getMonth()+1&&dd===NOW.getDate(),fut=new Date(cy,cm-1,dd)>NOW;
+    if(e){cnt++;if(MOOD[e.mood])tally[e.mood]=(tally[e.mood]||0)+1;}
+    const em=e&&MOOD[e.mood]?MOOD[e.mood][1]:'';
+    const lab=`${cm}월 ${dd}일${e?', 일기 있음':''}${em?', '+MOOD[e.mood][2]:''}`;
+    h+=`<button class="c${e?' has':''}${dw===0?' sun':''}${dw===6?' sat':''}${isToday?' today':''}${fut?' future':''}" data-day="${dd}" aria-label="${lab}"><span class="n">${dd}</span>${em?`<span class="em" aria-hidden="true">${em}</span>`:(otherMd.has(mmdd)?'<span class="dot"></span>':'<span class="em"></span>')}</button>`;
+  }
+  $('#grid').innerHTML=h;
+  $('#calSub').textContent=cnt?`이번 달에 ${cnt}일 일기를 썼어요.`:'이 달엔 아직 일기가 없어요. 날짜를 눌러 써 보세요.';
+  $('#sumTitle').textContent=`${cm}월의 기분`;
+  const ks=MOODS.filter(x=>tally[x[0]]).sort((a,b)=>tally[b[0]]-tally[a[0]]);
+  $('#moodSum').innerHTML=ks.length?ks.map(x=>`<span>${x[1]} ${x[2]} ${tally[x[0]]}일</span>`).join(''):'<span style="border:0;padding:0;color:var(--muted)">감정을 고른 날이 아직 없어요.</span>';
+}
+function showView(v){view=v;$('#calView').hidden=v!=='cal';$('#dayView').hidden=v!=='day';render();window.scrollTo(0,0)}
+function moveMonth(n){const t=new Date(cy,cm-1+n,1);cy=t.getFullYear();cm=t.getMonth()+1;renderCal()}
+$('#cPrev').addEventListener('click',()=>moveMonth(-1));
+$('#cNext').addEventListener('click',()=>moveMonth(1));
+$('#cToday').addEventListener('click',()=>{cy=TY;cm=NOW.getMonth()+1;renderCal()});
+$('#grid').addEventListener('click',e=>{const b=e.target.closest('[data-day]');if(!b)return;
+  view='day';go(cm,+b.dataset.day,Math.min(cy,TY));showView('day')});
+$('#toCal').addEventListener('click',()=>{cy=year;cm=m;showView('cal')});
+function render(){
+  if(view==='cal'){renderCal();return}
+  const k=keyOf(year);
+  $('#title').textContent=`${m}월 ${d}일`;
+  $('#kick').textContent=(m===NOW.getMonth()+1&&d===NOW.getDate())?'오늘의 페이지':'다른 날의 페이지';
+  $('#pick').value=valid(year)?k:`${TY}-${md()}`;
+  const ys=yearsShown(),c=drawRings(ys);
+  $('#sub').textContent=c?`이 날짜에 ${c}해치 기록이 쌓여 있어요.`:'이 날짜엔 아직 기록이 없어요. 첫 줄을 남겨 봐요.';
+  // 연도 선택
+  let opts='';for(let y=TY;y>=TY-40;y--)opts+=`<option value="${y}"${valid(y)?'':' disabled'}>${y}년${entries[y+'-'+md()]?' ●':''}</option>`;
+  $('#yearSel').innerHTML=opts;$('#yearSel').value=String(year);
+  $('#wh').textContent=year===TY?'오늘을 적기':`${year}년의 이 날 적기`;
+  // 쓰기 칸 (입력 중일 땐 덮어쓰지 않음)
+  if(k!==loadedKey||!dirty){
+    const src=drafts[k]||{text:entries[k]?.text||'',mood:entries[k]?.mood||''};
+    $('#text').value=src.text;mood=MOOD[src.mood]?src.mood:'';paintMood();
+    loadedKey=k;dirty=k in drafts;
+  }
+  $('#moodQ').textContent=year===TY&&m===NOW.getMonth()+1&&d===NOW.getDate()?'오늘의 하루는?':'그날의 하루는?';
+  showQuote();
+  $('#save').disabled=!valid(year);
+  // 해마다의 같은 날
+  $('#listTitle').textContent=`해마다의 ${m}월 ${d}일`;
+  $('#years').innerHTML=ys.map(y=>{
+    const id=y+'-'+md(),e=entries[id],ago=TY-y;
+    const agoTxt=ago===0?'올해':ago+'년 전';
+    if(!valid(y))return `<li class="yr none fade"><div><span class="y">${y}</span><span class="ago">${agoTxt}</span></div><div class="empty">이 해엔 ${m}월 ${d}일이 없었어요.</div></li>`;
+    const mo=e&&MOOD[e.mood]?`<span class="mood"><span class="e" aria-hidden="true">${MOOD[e.mood][1]}</span>${MOOD[e.mood][2]}</span>`:'';
+    const body=e?`${mo}<div class="txt">${esc(e.text)}</div><div class="acts"><button data-edit="${y}">고치기</button><button class="${armedDel===id?'danger':''}" data-del="${id}">${armedDel===id?'정말 지울까요?':'지우기'}</button></div>`
+      :`<div class="empty">기록 없음</div><div class="acts"><button data-edit="${y}">이 해에 쓰기</button></div>`;
+    return `<li class="yr fade${y===TY?' now':''}${e?'':' none'}"><div><span class="y">${y}</span><span class="ago">${agoTxt} · ${wd(y)}요일</span></div><div>${body}</div></li>`;
+  }).join('');
+  doSearch();
+}
+
+/* ---------- 이동 ---------- */
+function go(nm,nd,ny){
+  m=nm;d=nd;if(ny)year=ny;
+  if(!valid(year))year=[...Array(8)].map((_,i)=>TY-i).find(valid)||TY;
+  armedDel='';render();
+}
+function shift(n){const t=new Date(2024,m-1,d+n);go(t.getMonth()+1,t.getDate())}
+$('#prev').addEventListener('click',()=>shift(-1));
+$('#next').addEventListener('click',()=>shift(1));
+$('#today').addEventListener('click',()=>go(NOW.getMonth()+1,NOW.getDate(),TY));
+$('#pick').addEventListener('change',e=>{const v=e.target.value;if(!v)return;const[y,mm,dd]=v.split('-').map(Number);go(mm,dd,Math.min(y,TY))});
+$('#yearSel').addEventListener('change',e=>{year=+e.target.value;render()});
+document.addEventListener('keydown',e=>{
+  if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  const f=view==='cal'?moveMonth:shift;if(e.key==='ArrowLeft')f(-1);if(e.key==='ArrowRight')f(1);
+});
+
+/* ---------- 저장/삭제 ---------- */
+$('#text').addEventListener('input',markDirty);
+async function save(){
+  if(!store){$('#saveMsg').textContent='로그인 후 저장할 수 있어요.';return}
+  if(!valid(year))return;
+  const k=keyOf(year),t=$('#text').value.trim();
+  const btn=$('#save');btn.disabled=true;$('#saveMsg').textContent='저장 중…';
+  try{
+    if(!t&&!mood){ if(entries[k])await store.del(k); }
+    else await store.save(k,{date:k,md:md(),year,text:t,mood,updatedAt:new Date().toISOString()});
+    delete drafts[k];dirty=false;loadedKey='';
+    $('#saveMsg').textContent=(t||mood)?'저장했어요.':'빈 글이라 이 날 기록을 비웠어요.';
+    render();
+  }catch(e){$('#saveMsg').textContent=e&&e.code==='quota_exceeded'?'저장 공간이 가득 찼어요. 백업 후 오래된 기록을 정리해 주세요.':'저장하지 못했어요. 잠시 후 다시 눌러 주세요.';}
+  btn.disabled=false;
+}
+$('#save').addEventListener('click',save);
+$('#text').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();save()}});
+$('#years').addEventListener('click',async e=>{
+  const ed=e.target.closest('[data-edit]'),dl=e.target.closest('[data-del]');
+  if(ed){year=+ed.dataset.edit;armedDel='';render();$('#text').focus();$('#text').scrollIntoView({behavior:'smooth',block:'center'});}
+  if(dl){const id=dl.dataset.del;
+    if(armedDel!==id){armedDel=id;render();return;}
+    armedDel='';try{await store.del(id);delete drafts[id];if(id===loadedKey){dirty=false;loadedKey=''}}catch(err){setStatus('지우지 못했어요. 다시 시도해 주세요.')}
+    render();}
+});
+
+/* ---------- 검색 ---------- */
+function doSearch(){
+  const q=$('#q').value.trim();const ul=$('#results');
+  if(!q){ul.innerHTML='';return}
+  const hits=Object.keys(entries).filter(k=>entries[k].text.includes(q)||(MOOD[entries[k].mood]&&MOOD[entries[k].mood][2]===q)).sort().reverse().slice(0,60);
+  ul.innerHTML=hits.length?hits.map(k=>{const t=entries[k].text,i=Math.max(0,t.indexOf(q)),s=t.slice(Math.max(0,i-18),i+40),mo=MOOD[entries[k].mood];
+    return `<li><button data-go="${k}"><b>${k.slice(0,4)}.${+k.slice(5,7)}.${+k.slice(8)}</b>${mo?mo[1]+' ':''}<span>${esc(s)}</span></button></li>`}).join('')
+    :'<li class="hint" style="padding:10px 4px">찾는 단어가 든 일기가 없어요.</li>';
+}
+$('#q').addEventListener('input',doSearch);
+$('#results').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;const[y,mm,dd]=b.dataset.go.split('-').map(Number);view='day';go(mm,dd,y);showView('day');window.scrollTo({top:0,behavior:'smooth'})});
+
+/* ---------- 백업 ---------- */
+$('#saveBk').addEventListener('click',()=>{
+  const blob=new Blob([JSON.stringify(entries,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  const t=new Date();a.download=`나이테일기_백업_${t.getFullYear()}${pad(t.getMonth()+1)}${pad(t.getDate())}.json`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  $('#bkMsg').textContent=`${Object.keys(entries).length}개 기록을 파일로 저장했어요.`;
+});
+$('#copyBk').addEventListener('click',async()=>{
+  const txt=JSON.stringify(entries);
+  try{await navigator.clipboard.writeText(txt);$('#bkMsg').textContent=`${Object.keys(entries).length}개 기록을 복사했어요.`}
+  catch(e){$('#pasteBox').value=txt;$('#pasteBox').select();$('#bkMsg').textContent='자동 복사가 막혀서 아래 칸에 넣어 뒀어요. 직접 복사해 주세요.'}
+});
+async function restore(txt){
+  if(!store){$('#bkMsg').textContent='로그인 후 불러올 수 있어요.';return}
+  let o;try{o=JSON.parse(txt)}catch(e){$('#bkMsg').textContent='백업 글자 형식이 맞지 않아요.';return}
+  const ids=Object.keys(o||{}).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&o[k]&&typeof o[k].text==='string');
+  if(!ids.length){$('#bkMsg').textContent='불러올 기록이 없어요.';return}
+  let n=0;
+  for(const k of ids){const t=o[k].text.trim(),mo=MOOD[o[k].mood]?o[k].mood:'';if(!t&&!mo)continue;
+    try{await store.save(k,{date:k,md:k.slice(5),year:+k.slice(0,4),text:t,mood:mo,updatedAt:String(o[k].updatedAt||new Date().toISOString())});n++;$('#bkMsg').textContent=`불러오는 중… ${n}/${ids.length}`}catch(e){}}
+  $('#bkMsg').textContent=`${n}개 기록을 되살렸어요.`;$('#pasteBox').value='';render();
+}
+$('#restore').addEventListener('click',()=>restore($('#pasteBox').value));
+$('#fileBk').addEventListener('change',async e=>{const f=e.target.files[0];if(f)restore(await f.text());e.target.value=''});
+
+render();
+initStore();
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
