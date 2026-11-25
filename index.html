@@ -117,6 +117,10 @@ input[type=search]{width:100%;min-height:44px;border-radius:10px;border:1px soli
 .sumRow{display:flex;flex-wrap:wrap;gap:8px}
 .sumRow span{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:15px}
 .cal{margin-bottom:14px}
+li.divider{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:22px 4px 6px;color:var(--muted);font-size:14px;border-bottom:1px solid var(--line)}
+li.divider button{min-height:36px;font-size:14px;background:transparent;padding:0 12px}
+.yr.old{padding:12px 4px}.yr.old .y{font-size:24px;color:var(--muted)}
+.peek{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;background:var(--coralSoft);border-color:transparent;font-size:16px}
 #pasteBox{width:100%;min-height:90px;margin-top:10px;background:none;font-size:14px;line-height:1.5}
 @media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:96px;position:absolute;right:max(5vw,16px);top:22px}.band{position:relative;padding-bottom:76px}
 #dayView h1{padding-right:100px}.c{min-height:58px}.c .n{width:32px;height:32px;font-size:15px}.c .em{font-size:14px;height:14px}.nav button{flex:1 1 auto;padding:0 10px}.nav input{flex:1 1 100%}
@@ -249,6 +253,7 @@ const NOW=new Date(), TY=NOW.getFullYear();
 let m=NOW.getMonth()+1, d=NOW.getDate(), year=TY;
 let entries={}, store=null, loadedKey='', dirty=false, armedDel='';
 const drafts={};
+const opened=new Set();let anim=true;
 let mood='', qOffset=0, view='cal', cy=TY, cm=NOW.getMonth()+1;
 
 const MOODS=[['great','😆','최고'],['happy','😊','좋음'],['love','🥰','설렘'],['calm','😌','평온'],['soso','🙂','그럭저럭'],
@@ -387,6 +392,7 @@ async function initStore(){
   });
 }
 /* ---------- 그리기 ---------- */
+const agoTxtOf=a=>a===0?'올해':a+'년 전';
 function yearsShown(){
   const ys=new Set();for(let y=TY;y>TY-5;y--)ys.add(y);
   for(const k in entries)if(k.slice(5)===md())ys.add(+k.slice(0,4));
@@ -455,21 +461,32 @@ function render(){
   $('#save').disabled=!valid(year);
   // 해마다의 같은 날
   $('#listTitle').textContent=`해마다의 ${m}월 ${d}일`;
+  const oldCount=ys.filter(y=>TY-y>=5).length;let divided=false;
   $('#years').innerHTML=ys.map(y=>{
-    const id=y+'-'+md(),e=entries[id],ago=TY-y;
-    const agoTxt=ago===0?'올해':ago+'년 전';
-    if(!valid(y))return `<li class="yr none fade"><div><span class="y">${y}</span><span class="ago">${agoTxt}</span></div><div class="empty">이 해엔 ${m}월 ${d}일이 없었어요.</div></li>`;
+    const id=y+'-'+md(),e=entries[id],ago=TY-y,fd=anim?' fade':'';
+    let pre='';
+    if(ago>=5&&!divided){divided=true;
+      const allOpen=ys.filter(z=>TY-z>=5).every(z=>opened.has(z+'-'+md()));
+      pre=`<li class="divider"><span>5년보다 더 오래된 기록 ${oldCount}개</span><button data-openall="${allOpen?0:1}">${allOpen?'모두 접기':'모두 펼치기'}</button></li>`;}
+    if(ago>=5&&e&&!opened.has(id)){
+      const em=MOOD[e.mood]?MOOD[e.mood][1]+' ':'';
+      return pre+`<li class="yr old${fd}"><div><span class="y">${y}</span><span class="ago">${agoTxtOf(ago)} · ${wd(y)}요일</span></div><div><button class="peek" data-open="${id}" aria-expanded="false"><span>${em}일기를 썼어요</span><span class="hint">펼쳐 보기 ▾</span></button></div></li>`;
+    }
+    const agoTxt=agoTxtOf(ago);
+    if(!valid(y))return pre+`<li class="yr none${fd}"><div><span class="y">${y}</span><span class="ago">${agoTxt}</span></div><div class="empty">이 해엔 ${m}월 ${d}일이 없었어요.</div></li>`;
     const mo=e&&MOOD[e.mood]?`<span class="mood"><span class="e" aria-hidden="true">${MOOD[e.mood][1]}</span>${MOOD[e.mood][2]}</span>`:'';
-    const body=e?`${mo}<div class="txt">${esc(e.text)}</div><div class="acts"><button data-edit="${y}">고치기</button><button class="${armedDel===id?'danger':''}" data-del="${id}">${armedDel===id?'정말 지울까요?':'지우기'}</button></div>`
+    const fold=ago>=5?`<button data-close="${id}">접기 ▴</button>`:'';
+    const body=e?`${mo}<div class="txt">${esc(e.text)}</div><div class="acts">${fold}<button data-edit="${y}">고치기</button><button class="${armedDel===id?'danger':''}" data-del="${id}">${armedDel===id?'정말 지울까요?':'지우기'}</button></div>`
       :`<div class="empty">기록 없음</div><div class="acts"><button data-edit="${y}">이 해에 쓰기</button></div>`;
-    return `<li class="yr fade${y===TY?' now':''}${e?'':' none'}"><div><span class="y">${y}</span><span class="ago">${agoTxt} · ${wd(y)}요일</span></div><div>${body}</div></li>`;
+    return pre+`<li class="yr${fd}${y===TY?' now':''}${e?'':' none'}"><div><span class="y">${y}</span><span class="ago">${agoTxt} · ${wd(y)}요일</span></div><div>${body}</div></li>`;
   }).join('');
+  anim=true;
   doSearch();
 }
 
 /* ---------- 이동 ---------- */
 function go(nm,nd,ny){
-  m=nm;d=nd;if(ny)year=ny;
+  m=nm;d=nd;if(ny)year=ny;opened.clear();
   if(!valid(year))year=[...Array(8)].map((_,i)=>TY-i).find(valid)||TY;
   armedDel='';render();
 }
@@ -503,6 +520,15 @@ async function save(){
 $('#save').addEventListener('click',save);
 $('#text').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();save()}});
 $('#years').addEventListener('click',async e=>{
+  const op=e.target.closest('[data-open]'),cl=e.target.closest('[data-close]'),oa=e.target.closest('[data-openall]');
+  if(op||cl||oa){
+    if(op)opened.add(op.dataset.open);
+    if(cl)opened.delete(cl.dataset.close);
+    if(oa){const ids=yearsShown().filter(y=>TY-y>=5).map(y=>y+'-'+md());oa.dataset.openall==='1'?ids.forEach(i=>opened.add(i)):ids.forEach(i=>opened.delete(i));}
+    anim=false;render();
+    if(op){const b=document.querySelector(`[data-close="${op.dataset.open}"]`);if(b)b.focus({preventScroll:true});}
+    return;
+  }
   const ed=e.target.closest('[data-edit]'),dl=e.target.closest('[data-del]');
   if(ed){year=+ed.dataset.edit;armedDel='';render();$('#text').focus();$('#text').scrollIntoView({behavior:'smooth',block:'center'});}
   if(dl){const id=dl.dataset.del;
