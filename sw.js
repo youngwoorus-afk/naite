@@ -1,6 +1,6 @@
 // 나이테 일기장 오프라인 지원: 앱 화면을 기기에 저장해 두고, 인터넷이 없어도 열리게 함.
-const CACHE = 'naite-v2';
-const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest',
+const CACHE = 'naite-v3';
+const SHELL = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon-180.png'];
 
 self.addEventListener('install', e => {

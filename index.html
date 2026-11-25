@@ -237,7 +237,9 @@ input[type=search]{width:100%;min-height:44px;border-radius:10px;border:1px soli
 </div>
 
 <script type="module">
-import {firebaseConfig} from './config.js';
+// Firebase 설정값 (naite-diary 프로젝트) — 공개돼도 괜찮은 값이에요. 일기는 Firestore 보안 규칙이 지켜 줘요.
+const firebaseConfig={apiKey:"AIzaSyDrXTTfWvMBLuFhY95YQKfwpiNxHaG6mmg",authDomain:"naite-diary.firebaseapp.com",projectId:"naite-diary",
+storageBucket:"naite-diary.firebasestorage.app",messagingSenderId:"321355519435",appId:"1:321355519435:web:6fc600b2cbef1a9c69124e",measurementId:"G-RX9HMG7FCP"};
 {
 const $=s=>document.querySelector(s);
 const pad=n=>String(n).padStart(2,'0');
