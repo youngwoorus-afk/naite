@@ -142,6 +142,30 @@ html.locked #calView,html.locked #dayView{visibility:hidden}
 #rings .gr{transform-box:view-box;transform-origin:100px 100px;animation:ringIn .5s ease-out both}
 @keyframes ringIn{from{opacity:0;transform:scale(.55)}}
 @media(prefers-reduced-motion:reduce){#rings .gr{animation:none}}
+#calView main{display:grid;gap:14px}
+#calView main>.cal{margin:0}
+.hello .moodQ{font-size:20px;margin-bottom:12px}
+.hello .row{margin-top:4px}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px}
+.card h4{margin:0;font:700 18px/1.3 "Gowun Batang",serif}
+.cardHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.cardHead button{min-height:36px;font-size:14px;background:transparent;padding:0 12px}
+.wxMain{display:flex;align-items:center;gap:14px}
+.wxIcon{font-size:52px;line-height:1}
+.wxTemp{font:700 44px/1 "Gowun Batang",serif}
+.wxDesc{margin:4px 0 0;color:var(--muted);font-size:15px}
+.wxMeta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:14px;color:var(--muted)}
+.wxMeta b{color:var(--ink);font-weight:700}
+#ddList{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#ddList li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--coralSoft)}
+#ddList .nm{font-weight:700}
+#ddList .big{grid-row:span 2;font:700 24px/1 "Gowun Batang",serif;color:var(--coral);white-space:nowrap;text-align:right}
+#ddList .sm{font-size:13px;color:var(--muted)}
+#ddEditor{display:grid;gap:8px}
+.ddRow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:6px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
+.ddRow input,.ddRow select{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper);padding:0 8px;font-size:15px;width:100%}
+.ddRow button{min-height:44px;padding:0 10px;background:transparent;color:var(--sun);border-color:var(--line)}
+@media(max-width:700px){.duo{grid-template-columns:1fr}.ddRow{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}.ddRow input[type=text]{grid-column:1/3;grid-row:1}.ddRow button{grid-column:3;grid-row:1}.ddRow input[type=date]{grid-column:1/2}.ddRow select{grid-column:2/4}}
 #pasteBox{width:100%;min-height:90px;margin-top:10px;background:none;font-size:14px;line-height:1.5}
 @media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:128px;position:absolute;right:max(4vw,12px);top:calc(14px + env(safe-area-inset-top))}.band{position:relative;padding-bottom:76px}
 #dayView h1{padding-right:128px}#dayView .kick,#dayView .sub{padding-right:128px}.c{min-height:58px}.c .n{width:32px;height:32px;font-size:15px}.c .em{font-size:14px;height:14px}.nav button{flex:1 1 auto;padding:0 10px}.nav input{flex:1 1 100%}
@@ -191,6 +215,22 @@ html.locked #calView,html.locked #dayView{visibility:hidden}
   </div>
 </header>
 <main>
+  <section class="paper hello" aria-labelledby="helloQ">
+    <p class="moodQ" id="helloQ">오늘 하루 기분은 어때요?</p>
+    <div class="moods" id="helloMoods" role="group" aria-labelledby="helloQ"></div>
+    <div class="row"><button class="primary" id="helloWrite">오늘 일기 쓰러 가기</button><span class="hint" id="helloMsg"></span></div>
+  </section>
+  <div class="duo">
+    <section class="paper card" aria-labelledby="wxH">
+      <div class="cardHead"><h4 id="wxH">오늘의 날씨</h4><button id="wxRefresh">새로고침</button></div>
+      <div id="wxBody"><p class="hint" style="margin:0">날씨를 불러오는 중…</p></div>
+    </section>
+    <section class="paper card" aria-labelledby="ddH">
+      <div class="cardHead"><h4 id="ddH">D-day</h4><button id="ddEdit">편집</button></div>
+      <ul id="ddList"></ul>
+      <div id="ddEditor" hidden></div>
+    </section>
+  </div>
   <section class="paper cal" aria-label="달력">
     <div class="wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
     <div class="grid" id="grid"></div>
@@ -213,7 +253,7 @@ html.locked #calView,html.locked #dayView{visibility:hidden}
       <h1 id="title">11월 25일</h1>
       <p class="sub" id="sub"></p>
       <div class="nav">
-        <button id="toCal">‹ 달력</button>
+        <button id="toCal">⌂ 홈</button>
         <button id="prev" aria-label="전날">‹ 전날</button>
         <button id="today">오늘</button>
         <button id="next" aria-label="다음날">다음날 ›</button>
@@ -284,6 +324,7 @@ let m=NOW.getMonth()+1, d=NOW.getDate(), year=TY;
 let entries={}, store=null, loadedKey='', dirty=false, armedDel='';
 const drafts={};
 const opened=new Set();let anim=true;
+let settings={};
 let mood='', qOffset=0, view='cal', cy=TY, cm=NOW.getMonth()+1;
 
 const MOODS=[['great','😆','최고'],['happy','😊','좋음'],['love','🥰','설렘'],['calm','😌','평온'],['soso','🙂','그럭저럭'],
@@ -382,7 +423,9 @@ function localMode(){
   let raw=null;try{raw=JSON.parse(localStorage.getItem('nai-diary')||'{}')}catch(e){}
   entries=raw&&typeof raw==='object'?raw:{};
   const persist=()=>{try{localStorage.setItem('nai-diary',JSON.stringify(entries))}catch(e){}};
-  store={save:async(id,b)=>{entries[id]=b;persist();render()},del:async id=>{delete entries[id];persist();render()}};
+  store={save:async(id,b)=>{entries[id]=b;persist();render()},del:async id=>{delete entries[id];persist();render()},
+    saveSettings:async v=>{settings=v;try{localStorage.setItem('naite-settings',JSON.stringify(v))}catch(e){}render()}};
+  try{settings=JSON.parse(localStorage.getItem('naite-settings')||'{}')||{}}catch(e){settings={}}
   setStatus('아직 Firebase 설정 전이라 이 기기에만 저장돼요. config.js를 채우면 여러 기기에서 동기화돼요.');
   render();
 }
@@ -410,11 +453,11 @@ async function initStore(){
     $('#login').hidden=true;$('#acct').hidden=false;$('#who').textContent=(user.email||'로그인됨')+' 계정';
     const col=F.collection(fdb,'users',user.uid,'entries');
     const quick=p=>{p.catch(err=>setStatus('저장이 서버에 반영되지 않았어요 ('+err.code+'). 다시 저장해 주세요.'));return Promise.race([p,new Promise(r=>setTimeout(r,1500))])};
-    store={save:(id,b)=>quick(F.setDoc(F.doc(col,id),b)),del:id=>quick(F.deleteDoc(F.doc(col,id)))};
+    store={save:(id,b)=>quick(F.setDoc(F.doc(col,id),b)),del:id=>quick(F.deleteDoc(F.doc(col,id))),saveSettings:v=>quick(F.setDoc(F.doc(col,'settings'),v))};
     setStatus('기록을 불러오는 중…');
     const timer=setTimeout(()=>setStatus('서버 연결이 느려요. 보이는 기록은 이 기기에 저장된 내용이에요.'),10000);
     unsub=F.onSnapshot(col,{includeMetadataChanges:true},snap=>{
-      const o={};snap.forEach(d=>{const v=d.data();if(v&&typeof v.text==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d.id))o[d.id]=v});
+      const o={};let st={};snap.forEach(d=>{const v=d.data();if(d.id==='settings'&&v){st=v;return}if(v&&typeof v.text==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d.id))o[d.id]=v});settings=st;
       entries=o;
       if(!snap.metadata.fromCache){clearTimeout(timer);setStatus(snap.metadata.hasPendingWrites?'동기화 중…':'모든 기기와 동기화됐어요.')}
       else setStatus('오프라인이에요. 쓴 일기는 연결되면 자동으로 올라가요.');
@@ -467,6 +510,7 @@ function drawRings(){
   return n;
 }
 function renderCal(){
+  renderHome();
   $('#calTitle').textContent=`${cy}년 ${cm}월`;
   const first=new Date(cy,cm-1,1).getDay(),days=new Date(cy,cm,0).getDate();
   const otherMd=new Set();for(const k in entries)if(+k.slice(0,4)!==cy)otherMd.add(k.slice(5));
@@ -610,22 +654,24 @@ $('#results').addEventListener('click',e=>{const b=e.target.closest('[data-go]')
 
 /* ---------- 백업 ---------- */
 $('#saveBk').addEventListener('click',()=>{
-  const blob=new Blob([JSON.stringify(entries,null,1)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({...entries,settings},null,1)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   const t=new Date();a.download=`나이테일기_백업_${t.getFullYear()}${pad(t.getMonth()+1)}${pad(t.getDate())}.json`;
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   $('#bkMsg').textContent=`${Object.keys(entries).length}개 기록을 파일로 저장했어요.`;
 });
 $('#copyBk').addEventListener('click',async()=>{
-  const txt=JSON.stringify(entries);
+  const txt=JSON.stringify({...entries,settings});
   try{await navigator.clipboard.writeText(txt);$('#bkMsg').textContent=`${Object.keys(entries).length}개 기록을 복사했어요.`}
   catch(e){$('#pasteBox').value=txt;$('#pasteBox').select();$('#bkMsg').textContent='자동 복사가 막혀서 아래 칸에 넣어 뒀어요. 직접 복사해 주세요.'}
 });
 async function restore(txt){
   if(!store){$('#bkMsg').textContent='로그인 후 불러올 수 있어요.';return}
   let o;try{o=JSON.parse(txt)}catch(e){$('#bkMsg').textContent='백업 글자 형식이 맞지 않아요.';return}
+  let didSet=false;
+  if(o&&o.settings&&Array.isArray(o.settings.ddays)){const dd=cleanDdays(o.settings.ddays);if(dd.length){try{await store.saveSettings({...settings,ddays:dd});didSet=true}catch(e){}}}
   const ids=Object.keys(o||{}).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&o[k]&&typeof o[k].text==='string');
-  if(!ids.length){$('#bkMsg').textContent='불러올 기록이 없어요.';return}
+  if(!ids.length){$('#bkMsg').textContent=didSet?'D-day 설정을 불러왔어요. 홈에서 확인해 보세요.':'불러올 기록이 없어요.';return}
   let n=0;
   for(const k of ids){const t=o[k].text.trim(),mo=MOOD[o[k].mood]?o[k].mood:'';if(!t&&!mo)continue;
     try{await store.save(k,{date:k,md:k.slice(5),year:+k.slice(0,4),text:t,mood:mo,updatedAt:String(o[k].updatedAt||new Date().toISOString())});n++;$('#bkMsg').textContent=`불러오는 중… ${n}/${ids.length}`}catch(e){}}
@@ -634,7 +680,120 @@ async function restore(txt){
 $('#restore').addEventListener('click',()=>restore($('#pasteBox').value));
 $('#fileBk').addEventListener('change',async e=>{const f=e.target.files[0];if(f)restore(await f.text());e.target.value=''});
 
-render();
+/* ---------- 홈: 오늘 기분 · 날씨 · D-day ---------- */
+const todayKey=()=>`${TY}-${pad(NOW.getMonth()+1)}-${pad(NOW.getDate())}`;
+$('#helloMoods').innerHTML=MOODS.map(([k,e,l])=>`<button type="button" data-hmood="${k}" aria-pressed="false"><span class="e" aria-hidden="true">${e}</span>${l}</button>`).join('');
+function renderHome(){
+  const e=entries[todayKey()],mo=e&&MOOD[e.mood];
+  for(const b of document.querySelectorAll('#helloMoods button'))b.setAttribute('aria-pressed',String(!!mo&&b.dataset.hmood===e.mood));
+  $('#helloQ').textContent=mo?`오늘의 기분: ${mo[1]} ${mo[2]} · 바뀌었으면 다시 골라도 돼요.`:'오늘 하루 기분은 어때요?';
+  $('#helloWrite').textContent=e&&e.text?'오늘 일기 이어 쓰기':'오늘 일기 쓰러 가기';
+  renderDdays();
+}
+$('#helloMoods').addEventListener('click',async ev=>{
+  const b=ev.target.closest('[data-hmood]');if(!b)return;
+  if(!store){$('#helloMsg').textContent='로그인 후 고를 수 있어요.';return}
+  const k=todayKey(),e=entries[k];
+  $('#helloMsg').textContent='저장 중…';
+  try{await store.save(k,{date:k,md:k.slice(5),year:TY,text:e?.text||'',mood:b.dataset.hmood,updatedAt:new Date().toISOString()});$('#helloMsg').textContent='오늘 기분을 남겼어요.';}
+  catch(err){$('#helloMsg').textContent='저장하지 못했어요. 다시 눌러 주세요.'}
+  renderCal();
+});
+$('#helloWrite').addEventListener('click',()=>{view='day';go(NOW.getMonth()+1,NOW.getDate(),TY);showView('day');setTimeout(()=>$('#text').focus(),300)});
+
+/* D-day */
+const dnum=t=>{const[y,m,d]=t.split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5)};
+const dstr=n=>{const t=new Date(n*864e5);return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`};
+const fmtK=t=>{const[y,m,d]=t.split('-').map(Number);return `${y}년 ${m}월 ${d}일`};
+const nextYearly=(mmdd,from)=>{for(let y=TY-1;y<=TY+2;y++){const t=`${y}-${mmdd}`,n=dnum(t);if(dstr(n)===t&&n>=from)return {n,y}}return {n:from,y:TY}};
+const cleanDdays=a=>a.filter(x=>x&&typeof x.name==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date)&&['since','birth','yearly'].includes(x.type)).slice(0,20).map(x=>({name:x.name.slice(0,30),date:x.date,type:x.type}));
+const DTYPE={since:'기념일 (그날부터 세기)',birth:'태어난 날 (백일·돌)',yearly:'매년 (생일 등)'};
+function ddInfo(x){
+  const T=dnum(todayKey()),D=dnum(x.date),mmdd=x.date.slice(5),Y0=+x.date.slice(0,4);
+  if(x.type==='yearly'){
+    const nx=nextYearly(mmdd,T),left=nx.n-T;
+    return {big:left?`D-${left}`:'오늘!',sm:`${+mmdd.slice(0,2)}월 ${+mmdd.slice(3)}일${left?'':' 🎉'}`};
+  }
+  if(T<D){const left=D-T;return {big:`D-${left}`,sm:fmtK(x.date)}}
+  if(T===D)return {big:'D-day',sm:'바로 오늘이에요 🎉'};
+  const cnt=T-D+1,yrs=[];
+  const h=Math.ceil((cnt+1)/100)*100,hn=D+h-1;
+  const an=nextYearly(mmdd,T+0),ay=an.y-Y0;
+  let mile;
+  const yLabel=k=>x.type==='birth'?(k===1?'첫 돌':`${k}번째 생일`):`${k}주년`;
+  if(ay>0&&an.n<=hn)mile=an.n===T?`오늘 ${yLabel(ay)}이에요 🎉`:`${yLabel(ay)}까지 D-${an.n-T}`;
+  else mile=hn===T?`오늘 ${h}일이에요 🎉`:`${h}일까지 D-${hn-T}`;
+  return {big:`${cnt.toLocaleString()}일째`,sm:mile};
+}
+function renderDdays(){
+  const dd=cleanDdays((settings&&settings.ddays)||[]);
+  $('#ddList').innerHTML=dd.length?dd.map(x=>{const i=ddInfo(x);return `<li><span class="nm">${esc(x.name)}</span><span class="big">${esc(i.big)}</span><span class="sm">${esc(i.sm)}</span></li>`}).join('')
+    :'<li style="background:none;padding:0;display:block" class="hint">‘편집’을 눌러 기념일을 추가해 보세요.</li>';
+}
+function ddRowHtml(x={name:'',date:'',type:'since'}){
+  return `<div class="ddRow"><input type="text" placeholder="이름 (예: 결혼기념일)" value="${esc(x.name)}" maxlength="30"><input type="date" value="${esc(x.date)}"><select>${Object.entries(DTYPE).map(([k,l])=>`<option value="${k}"${x.type===k?' selected':''}>${l}</option>`).join('')}</select><button type="button" data-ddrm aria-label="삭제">삭제</button></div>`;
+}
+function openDdEditor(){
+  const dd=cleanDdays((settings&&settings.ddays)||[]);
+  $('#ddEditor').innerHTML=`<div id="ddRows">${(dd.length?dd:[undefined]).map(x=>ddRowHtml(x)).join('')}</div>
+    <div class="row"><button type="button" id="ddAdd">+ 추가</button><button type="button" class="primary" id="ddSave">저장</button><button type="button" id="ddCancel">취소</button><span class="hint" id="ddMsg"></span></div>`;
+  $('#ddEditor').hidden=false;$('#ddList').hidden=true;$('#ddEdit').hidden=true;
+}
+function closeDdEditor(){$('#ddEditor').hidden=true;$('#ddEditor').innerHTML='';$('#ddList').hidden=false;$('#ddEdit').hidden=false;renderDdays()}
+$('#ddEdit').addEventListener('click',openDdEditor);
+$('#ddEditor').addEventListener('click',async ev=>{
+  if(ev.target.closest('[data-ddrm]')){ev.target.closest('.ddRow').remove();return}
+  if(ev.target.id==='ddAdd'){$('#ddRows').insertAdjacentHTML('beforeend',ddRowHtml());return}
+  if(ev.target.id==='ddCancel'){closeDdEditor();return}
+  if(ev.target.id==='ddSave'){
+    if(!store){$('#ddMsg').textContent='로그인 후 저장할 수 있어요.';return}
+    const rows=[...document.querySelectorAll('#ddRows .ddRow')].map(r=>({name:r.children[0].value.trim(),date:r.children[1].value,type:r.children[2].value})).filter(x=>x.name||x.date);
+    const bad=rows.find(x=>!x.name||!/^\d{4}-\d{2}-\d{2}$/.test(x.date));
+    if(bad){$('#ddMsg').textContent='이름과 날짜를 모두 채워 주세요.';return}
+    $('#ddMsg').textContent='저장 중…';
+    try{await store.saveSettings({...settings,ddays:cleanDdays(rows)});settings={...settings,ddays:cleanDdays(rows)};closeDdEditor()}
+    catch(e){$('#ddMsg').textContent='저장하지 못했어요. 다시 눌러 주세요.'}
+  }
+});
+
+/* 날씨 (Open-Meteo, 키 필요 없음) */
+const WMO={0:['☀️','맑음'],1:['🌤️','대체로 맑음'],2:['⛅','구름 조금'],3:['☁️','흐림'],45:['🌫️','안개'],48:['🌫️','짙은 안개'],
+51:['🌦️','약한 이슬비'],53:['🌦️','이슬비'],55:['🌧️','강한 이슬비'],56:['🌧️','어는 이슬비'],57:['🌧️','어는 이슬비'],61:['🌦️','약한 비'],63:['🌧️','비'],65:['🌧️','강한 비'],
+66:['🌧️','어는 비'],67:['🌧️','어는 비'],71:['🌨️','약한 눈'],73:['🌨️','눈'],75:['❄️','많은 눈'],77:['🌨️','싸락눈'],80:['🌦️','소나기'],81:['🌧️','소나기'],82:['⛈️','강한 소나기'],
+85:['🌨️','눈 소나기'],86:['❄️','강한 눈 소나기'],95:['⛈️','뇌우'],96:['⛈️','우박 동반 뇌우'],99:['⛈️','우박 동반 뇌우']};
+const DEFAULT_LOC={lat:35.2279,lon:128.6811,place:'창원',note:'위치 권한이 없어 창원 날씨를 보여 줘요.'};
+function getPos(){return new Promise(res=>{
+  if(!navigator.geolocation)return res(null);
+  navigator.geolocation.getCurrentPosition(p=>res({lat:+p.coords.latitude.toFixed(3),lon:+p.coords.longitude.toFixed(3)}),()=>res(null),{timeout:9000,maximumAge:1800000,enableHighAccuracy:false});
+})}
+function paintWx(w){
+  const c=WMO[w.code]||['🌡️','날씨'];
+  $('#wxBody').innerHTML=`<div class="wxMain"><span class="wxIcon" aria-hidden="true">${c[0]}</span><div><div class="wxTemp">${Math.round(w.t)}°</div><p class="wxDesc">${esc(c[1])} · ${esc(w.place)}</p></div></div>
+  <div class="wxMeta"><span>최고 <b>${Math.round(w.max)}°</b></span><span>최저 <b>${Math.round(w.min)}°</b></span><span>체감 <b>${Math.round(w.feel)}°</b></span><span>비 올 확률 <b>${w.pop??'-'}%</b></span></div>
+  ${w.note?`<p class="hint" style="margin:10px 0 0">${esc(w.note)}</p>`:''}`;
+}
+let wxBusy=false;
+async function loadWeather(force){
+  if(wxBusy)return;wxBusy=true;
+  try{
+    let c=null;try{c=JSON.parse(localStorage.getItem('naite-wx')||'null')}catch(e){}
+    if(c&&!force&&Date.now()-c.at<30*60000){paintWx(c.w);return}
+    if(c)paintWx(c.w);else $('#wxBody').innerHTML='<p class="hint" style="margin:0">지금 있는 곳의 날씨를 확인하는 중…</p>';
+    const pos=await getPos(),loc=pos||DEFAULT_LOC;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FSeoul&forecast_days=1`;
+    const r=await fetch(u);if(!r.ok)throw 0;const j=await r.json();
+    let place=loc.place||'현재 위치';
+    if(pos){try{const g=await (await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.lat}&longitude=${pos.lon}&localityLanguage=ko`)).json();
+      place=[g.city,g.locality].filter((v,i,a)=>v&&a.indexOf(v)===i).join(' ')||place}catch(e){}}
+    const w={t:j.current.temperature_2m,feel:j.current.apparent_temperature,code:j.current.weather_code,max:j.daily.temperature_2m_max[0],min:j.daily.temperature_2m_min[0],pop:j.daily.precipitation_probability_max?.[0],place:String(place).slice(0,40),note:pos?'':DEFAULT_LOC.note};
+    try{localStorage.setItem('naite-wx',JSON.stringify({at:Date.now(),w}))}catch(e){}
+    paintWx(w);
+  }catch(e){if(!$('#wxBody .wxMain'))$('#wxBody').innerHTML='<p class="hint" style="margin:0">날씨를 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침을 눌러 주세요.</p>'}
+  finally{wxBusy=false}
+}
+$('#wxRefresh').addEventListener('click',()=>loadWeather(true));
+loadWeather(false);
+
 /* ---------- 앱 잠금 (이 기기 전용 4자리 비밀번호) ---------- */
 let doSignOut=null;
 const PINKEY='naite-pin';
@@ -713,6 +872,7 @@ document.addEventListener('visibilitychange',()=>{
 paintPinRow();
 if(getPin())openLock('unlock');
 
+render();
 initStore();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
