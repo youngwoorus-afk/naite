@@ -215,11 +215,6 @@ html.locked #calView,html.locked #dayView{visibility:hidden}
   </div>
 </header>
 <main>
-  <section class="paper hello" aria-labelledby="helloQ">
-    <p class="moodQ" id="helloQ">오늘 하루 기분은 어때요?</p>
-    <div class="moods" id="helloMoods" role="group" aria-labelledby="helloQ"></div>
-    <div class="row"><button class="primary" id="helloWrite">오늘 일기 쓰러 가기</button><span class="hint" id="helloMsg"></span></div>
-  </section>
   <div class="duo">
     <section class="paper card" aria-labelledby="wxH">
       <div class="cardHead"><h4 id="wxH">오늘의 날씨</h4><button id="wxRefresh">새로고침</button></div>
@@ -682,25 +677,7 @@ $('#fileBk').addEventListener('change',async e=>{const f=e.target.files[0];if(f)
 
 /* ---------- 홈: 오늘 기분 · 날씨 · D-day ---------- */
 const todayKey=()=>`${TY}-${pad(NOW.getMonth()+1)}-${pad(NOW.getDate())}`;
-$('#helloMoods').innerHTML=MOODS.map(([k,e,l])=>`<button type="button" data-hmood="${k}" aria-pressed="false"><span class="e" aria-hidden="true">${e}</span>${l}</button>`).join('');
-function renderHome(){
-  const e=entries[todayKey()],mo=e&&MOOD[e.mood];
-  for(const b of document.querySelectorAll('#helloMoods button'))b.setAttribute('aria-pressed',String(!!mo&&b.dataset.hmood===e.mood));
-  $('#helloQ').textContent=mo?`오늘의 기분: ${mo[1]} ${mo[2]} · 바뀌었으면 다시 골라도 돼요.`:'오늘 하루 기분은 어때요?';
-  $('#helloWrite').textContent=e&&e.text?'오늘 일기 이어 쓰기':'오늘 일기 쓰러 가기';
-  renderDdays();
-}
-$('#helloMoods').addEventListener('click',async ev=>{
-  const b=ev.target.closest('[data-hmood]');if(!b)return;
-  if(!store){$('#helloMsg').textContent='로그인 후 고를 수 있어요.';return}
-  const k=todayKey(),e=entries[k];
-  $('#helloMsg').textContent='저장 중…';
-  try{await store.save(k,{date:k,md:k.slice(5),year:TY,text:e?.text||'',mood:b.dataset.hmood,updatedAt:new Date().toISOString()});$('#helloMsg').textContent='오늘 기분을 남겼어요.';}
-  catch(err){$('#helloMsg').textContent='저장하지 못했어요. 다시 눌러 주세요.'}
-  renderCal();
-});
-$('#helloWrite').addEventListener('click',()=>{view='day';go(NOW.getMonth()+1,NOW.getDate(),TY);showView('day');setTimeout(()=>$('#text').focus(),300)});
-
+function renderHome(){renderDdays()}
 /* D-day */
 const dnum=t=>{const[y,m,d]=t.split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5)};
 const dstr=n=>{const t=new Date(n*864e5);return `${t.getUTCFullYear()}-${pad(t.getUTCMonth()+1)}-${pad(t.getUTCDate())}`};
