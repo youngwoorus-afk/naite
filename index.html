@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2f3170">
+<meta name="theme-color" content="#2f6b45">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,9 +23,9 @@
    COLOUR and TYPE: 밤하늘 남색 띠 + 흰 종이 + 산호색 포인트 / Gowun Batang 제목, Gowun Dodum 본문.
    LAYOUT: 남색 띠(날짜·이동·나이테) → 종이 위 쓰기 칸 → 해마다의 같은 날 → 검색·백업. */
 :root{color-scheme:light dark;
---bg:light-dark(#f3f2fa,#101127);--band:light-dark(#2f3170,#1a1b44);--paper:light-dark(#fff,#1c1d3d);
---ink:light-dark(#1e1f3f,#ecebfa);--muted:light-dark(#686a8c,#a5a6c9);--line:light-dark(#e4e3f1,#2f305b);
---coral:#ff6b5b;--coralSoft:light-dark(#fff0ee,#3a2531);--onBand:#f4f3ff}
+--bg:light-dark(#f2f6ef,#0e1912);--band:light-dark(#2f6b45,#183a25);--paper:light-dark(#fff,#16261b);
+--ink:light-dark(#1b2a1f,#e6f0e3);--muted:light-dark(#5e7263,#9db3a0);--line:light-dark(#dde8d9,#29402f);
+--coral:light-dark(#3a9a5c,#5cbf7d);--coralSoft:light-dark(#e6f3e7,#1f3b29);--onBand:#f1f8ee;--sun:light-dark(#c9553f,#ef8a74)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Gowun Dodum",system-ui,sans-serif;overflow-x:clip}
@@ -53,7 +53,7 @@ h1{font:700 clamp(52px,10vw,92px)/1.02 "Gowun Batang",serif;margin:6px 0 10px;le
 .nav{display:flex;flex-wrap:wrap;gap:8px}
 .nav button,.nav input{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:var(--onBand);min-height:44px;border-radius:10px;padding:0 14px;font-size:16px}
 .nav input{color-scheme:dark}
-.rings{width:clamp(130px,20vw,190px);height:auto;display:block}
+.rings{overflow:visible;width:clamp(130px,20vw,190px);height:auto;display:block}
 main{position:relative;max-width:900px;margin:-60px auto 0;padding:0 max(3vw,12px) 64px}
 .paper{background:var(--paper);border-radius:18px;box-shadow:0 18px 40px -24px rgba(20,20,60,.45);padding:clamp(18px,3vw,32px)}
 .writeHead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -75,7 +75,7 @@ h3{font:700 22px/1.2 "Gowun Batang",serif;margin:36px 4px 10px}
 .yr .empty{color:var(--muted)}
 .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .acts button{min-height:36px;padding:0 12px;font-size:14px;background:transparent}
-.acts .danger{border-color:var(--coral);color:var(--coral)}
+.acts .danger{border-color:var(--sun);color:var(--sun)}
 .yr.none{opacity:.75}
 .fade{animation:fade .35s ease both}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -102,7 +102,7 @@ input[type=search]{width:100%;min-height:44px;border-radius:10px;border:1px soli
 [hidden]{display:none!important}
 .wk,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .wk span{text-align:center;font-size:13px;color:var(--muted);padding:4px 0 8px}
-.wk span:first-child,.c.sun .n{color:var(--coral)}.wk span:last-child,.c.sat .n{color:light-dark(#3f5fd8,#8fa5ff)}
+.wk span:first-child,.c.sun .n{color:var(--sun)}.wk span:last-child,.c.sat .n{color:light-dark(#3d6fb5,#8fb3e6)}
 .c{min-height:68px;border:0;border-radius:12px;background:transparent;padding:6px 0 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .c:hover{background:var(--coralSoft)}
 .c .n{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;font-weight:700;font-size:16px}
@@ -139,8 +139,11 @@ html.locked #calView,html.locked #dayView{visibility:hidden}
 .pad button.ghost{background:transparent;border-color:transparent;font-size:16px}
 .lockLinks{display:flex;gap:10px;margin-top:18px}
 .lockLinks button{background:transparent;border:0;color:var(--onBand);text-decoration:underline;font-size:14px;min-height:40px}
+#rings .gr{transform-box:view-box;transform-origin:100px 100px;animation:ringIn .5s ease-out both}
+@keyframes ringIn{from{opacity:0;transform:scale(.55)}}
+@media(prefers-reduced-motion:reduce){#rings .gr{animation:none}}
 #pasteBox{width:100%;min-height:90px;margin-top:10px;background:none;font-size:14px;line-height:1.5}
-@media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:96px;position:absolute;right:max(5vw,16px);top:22px}.band{position:relative;padding-bottom:76px}
+@media(max-width:600px){.top{grid-template-columns:1fr auto}.top>div{grid-column:1/-1}.rings{width:96px;position:absolute;right:max(5vw,16px);top:calc(22px + env(safe-area-inset-top))}.band{position:relative;padding-bottom:76px}
 #dayView h1{padding-right:100px}.c{min-height:58px}.c .n{width:32px;height:32px;font-size:15px}.c .em{font-size:14px;height:14px}.nav button{flex:1 1 auto;padding:0 10px}.nav input{flex:1 1 100%}
 .quote{grid-template-columns:1fr}.quote .tag{grid-row:auto;justify-self:start}
 .moods{grid-template-columns:repeat(5,minmax(0,1fr))}.moods button{min-height:60px;font-size:12px}
@@ -426,17 +429,39 @@ function yearsShown(){
   for(const k in entries)if(k.slice(5)===md())ys.add(+k.slice(0,4));
   return [...ys].filter(y=>y<=TY).sort((a,b)=>b-a);
 }
-function drawRings(ys){
-  const n=ys.length,max=92,min=14,step=n>1?(max-min)/(n-1):0;
-  let s='<circle cx="100" cy="100" r="98" fill="rgba(255,255,255,.06)"/>';
-  ys.forEach((y,i)=>{
-    const r=max-i*step,has=!!entries[y+'-'+md()];
-    s+=`<circle cx="100" cy="100" r="${r.toFixed(1)}" fill="none" stroke="${has?'#ff6b5b':'rgba(255,255,255,.28)'}" stroke-width="${has?5:1.5}"${y===year?' stroke-dasharray="2 5"':''}/>`;
+let ringKey='';
+function wobPath(r,seed,nz=1,cx=100,cy=100){
+  let p='';
+  for(let i=0;i<=90;i++){const t=i/90*Math.PI*2;
+    const k=1+0.045*Math.sin(2*t+0.7)+0.03*Math.sin(3*t+1.9)+nz*(0.012*Math.sin(7*t+seed)+0.008*Math.sin(11*t+seed*1.3));
+    p+=(i?'L':'M')+(cx+r*k*Math.cos(t)+r*0.04).toFixed(1)+','+(cy+r*k*0.95*Math.sin(t)).toFixed(1);}
+  return p+'Z';
+}
+function drawRings(){
+  const yrs=Object.keys(entries).filter(k=>k.slice(5)===md()).map(k=>+k.slice(0,4)).sort((a,b)=>a-b);
+  const n=yrs.length,key=md()+'|'+yrs.join(',')+'|'+year;
+  if(key===ringKey)return n;ringKey=key;
+  let s=`<defs><radialGradient id="wood" cx="52%" cy="50%" r="60%"><stop offset="0" stop-color="#f3dfb4"/><stop offset=".7" stop-color="#e2bf86"/><stop offset="1" stop-color="#cfa265"/></radialGradient>
+  <linearGradient id="lf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8f0c0"/><stop offset="1" stop-color="#67b86f"/></linearGradient></defs>`;
+  if(!n){
+    s+=`<ellipse cx="100" cy="150" rx="46" ry="9" fill="rgba(0,0,0,.18)"/>
+    <path d="M100 150 C100 128 100 112 100 96" stroke="#8fd49a" stroke-width="5" stroke-linecap="round" fill="none" class="gr"/>
+    <path d="M100 112 C82 92 60 94 52 101 C60 117 84 122 100 112Z" fill="url(#lf)" class="gr" style="animation-delay:.15s"/>
+    <path d="M100 102 C114 76 140 72 150 78 C144 98 118 108 100 102Z" fill="url(#lf)" class="gr" style="animation-delay:.25s"/>`;
+    $('#rings').innerHTML=s;return 0;
+  }
+  const R=24+66*(1-Math.exp(-n/5)),pith=3.5;
+  s+=`<g class="gr"><path d="${wobPath(R+7,1)}" fill="#5c3f26"/><path d="${wobPath(R+4.5,2)}" fill="none" stroke="#7a5534" stroke-width="2" stroke-dasharray="3 4"/>
+  <path d="${wobPath(R,3)}" fill="url(#wood)"/></g>`;
+  yrs.forEach((y,i)=>{
+    const nz=Math.min(1,(R-pith)/n/9),r=pith+(R-pith)*(i+1)/n-0.8,sel=y===year,dl=(0.08+i*Math.min(0.06,0.7/n)).toFixed(2);
+    if(i<n-1)s+=`<path class="gr" style="animation-delay:${dl}s" d="${wobPath(r-(R-pith)/n*0.35,y%89+5,nz)}" fill="none" stroke="#c99a5f" stroke-opacity=".35" stroke-width="${Math.max(1,(R-pith)/n*0.35).toFixed(1)}"/>`;
+    s+=`<path class="gr" style="animation-delay:${dl}s" d="${wobPath(r,y%97,nz)}" fill="none" stroke="${sel?'#2f7d4a':'#9a6534'}" stroke-opacity="${sel?1:.8}" stroke-width="${sel?2.8:1.5}"/>`;
   });
-  const c=Object.keys(entries).filter(k=>k.slice(5)===md()).length;
-  s+=`<text x="100" y="108" text-anchor="middle" fill="#f4f3ff" font-family="Gowun Batang,serif" font-size="26" font-weight="700">${c}</text>`;
+  s+=`<ellipse cx="102" cy="100" rx="${pith}" ry="${pith*0.9}" fill="#7a4f27" class="gr"/>`;
+  if(n>2)s+=`<path d="M103 100 L${(103+R*0.55).toFixed(1)} ${(100-R*0.18).toFixed(1)}" stroke="#8a5a2e" stroke-opacity=".45" stroke-width="1.1" class="gr" style="animation-delay:.4s"/>`;
   $('#rings').innerHTML=s;
-  return c;
+  return n;
 }
 function renderCal(){
   $('#calTitle').textContent=`${cy}년 ${cm}월`;
@@ -472,7 +497,7 @@ function render(){
   $('#title').textContent=`${m}월 ${d}일`;
   $('#kick').textContent=(m===NOW.getMonth()+1&&d===NOW.getDate())?'오늘의 페이지':'다른 날의 페이지';
   $('#pick').value=valid(year)?k:`${TY}-${md()}`;
-  const ys=yearsShown(),c=drawRings(ys);
+  const ys=yearsShown(),c=drawRings();
   $('#sub').textContent=c?`이 날짜에 ${c}해치 기록이 쌓여 있어요.`:'이 날짜엔 아직 기록이 없어요. 첫 줄을 남겨 봐요.';
   // 연도 선택
   let opts='';for(let y=TY;y>=TY-40;y--)opts+=`<option value="${y}"${valid(y)?'':' disabled'}>${y}년${entries[y+'-'+md()]?' ●':''}</option>`;
